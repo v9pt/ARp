@@ -117,12 +117,6 @@
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script>
-        window.onload = function() {
-            alert("Most Optimal When used on a Mobile Device");
-        };
-    </script>
 </head>
 <body>
     <div class="info-panel">
@@ -196,7 +190,7 @@
                 // Overlapping effect
                 const meshEntity = new AFRAME.THREE.Object3D();
                 meshEntity.add(bar);
-                chartEntity.appendChild(meshEntity);
+                chartEntity.object3D.add(meshEntity);
 
                 // Add text label
                 const text = document.createElement('a-text');
@@ -223,7 +217,7 @@
                 // Overlapping effect
                 const meshEntity = new AFRAME.THREE.Object3D();
                 meshEntity.add(slice);
-                chartEntity.appendChild(meshEntity);
+                chartEntity.object3D.add(meshEntity);
 
                 // Add text label
                 const text = document.createElement('a-text');
@@ -235,23 +229,45 @@
             });
         }
 
+        const spreadsheetId = 'qpmllytxss4g';
+
         function fetchData(spreadsheetId) {
             fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Fetched data:', data);
                     if (Array.isArray(data) && data.length > 1) {
-                        const names = data.slice(1).map(row => row[0]);  // First column for names
-                        const values = data.slice(1).map(row => parseFloat(row[1]));  // Second column for values
+                        const names = data.slice(1).map(row => row[0]);
+                        const values = data.slice(1).map(row => parseFloat(row[1]));
                         createChart(values, names);
+
+                        // Update the data display table
+                        const tbody = document.querySelector('#data-table tbody');
+                        tbody.innerHTML = '';
+                        data.slice(1).forEach((row) => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td>`;
+                            tbody.appendChild(tr);
+                        });
                     }
                 })
                 .catch(error => console.error('Error fetching data:', error));
         }
 
         // Initial data fetch
-        const spreadsheetId = 'your_spreadsheet_id';
         fetchData(spreadsheetId);
+
+        // Zoom and rotation controls
+        const zoomSlider = document.getElementById('zoom-slider');
+        zoomSlider.addEventListener('input', () => {
+            const camera = document.getElementById('camera');
+            camera.setAttribute('position', `0 1.6 ${zoomSlider.value}`);
+        });
+
+        const rotationSlider = document.getElementById('rotation-slider');
+        rotationSlider.addEventListener('input', () => {
+            const chart = document.getElementById('chart');
+            chart.setAttribute('rotation', `0 ${rotationSlider.value} 0`);
+        });
     </script>
 </body>
 </html>
