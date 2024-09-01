@@ -178,7 +178,6 @@
                 values.forEach((value, index) => {
                     const barHeight = (value / 100) * maxHeight;
 
-                    // Create the main bar with transparency
                     const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
                     const material = new THREE.MeshBasicMaterial({
                         color: 0x00ff00,
@@ -188,7 +187,6 @@
                     const bar = new THREE.Mesh(geometry, material);
                     bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
 
-                    // Create a border highlight with transparency
                     const borderMaterial = new THREE.MeshBasicMaterial({
                         color: 0xffffff,
                         opacity: 0.3,
@@ -198,7 +196,6 @@
                     const border = new THREE.Mesh(borderGeometry, borderMaterial);
                     border.position.copy(bar.position);
 
-                    // Create the 3D effect with transparency
                     const highlightMaterial1 = new THREE.MeshBasicMaterial({
                         color: 0x00ff00,
                         emissive: 0x00ff00,
@@ -219,8 +216,10 @@
                     const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
                     const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
 
-                    highlight1.position.set(bar.position.x, bar.position.y, bar.position.z + 0.01);
-                    highlight2.position.set(bar.position.x, bar.position.y, bar.position.z - 0.01);
+                    highlight1.position.copy(bar.position);
+                    highlight2.position.copy(bar.position);
+                    highlight1.position.z += 0.01;
+                    highlight2.position.z -= 0.01;
 
                     const meshEntity = new AFRAME.THREE.Object3D();
                     meshEntity.add(bar);
@@ -232,7 +231,6 @@
                     wrapperEntity.setObject3D('mesh', meshEntity);
                     chartEntity.appendChild(wrapperEntity);
 
-                    // Adding text labels with transparency
                     const textGeometry = new THREE.TextGeometry(names[index], {
                         font: new THREE.FontLoader().parse(require('three/examples/fonts/helvetiker_regular.typeface.json')),
                         size: 0.5,
@@ -241,11 +239,11 @@
                     const textMaterial = new THREE.MeshBasicMaterial({
                         color: 0x000000,
                         transparent: true,
-                        opacity: 0.7 // Adjust opacity to control text transparency
+                        opacity: 0.7
                     });
                     const text = new THREE.Mesh(textGeometry, textMaterial);
                     text.position.set(bar.position.x, bar.position.y + barHeight / 2 + 0.5, bar.position.z);
-                    text.rotation.set(0, Math.PI / 2, 0); // Adjust rotation for readability
+                    text.rotation.set(0, Math.PI / 2, 0);
                     text.geometry.center();
 
                     const textEntity = document.createElement('a-entity');
@@ -259,7 +257,7 @@
                     const material = new THREE.MeshBasicMaterial({ 
                         color: 0x0000ff,
                         transparent: true,
-                        opacity: 0.6 // Adjust opacity to control transparency
+                        opacity: 0.6
                     });
                     const point = new THREE.Mesh(geometry, material);
                     point.position.set(index * 0.5, value / 100 * maxHeight, 0);
@@ -275,11 +273,14 @@
         }
 
         function fetchData(spreadsheetId) {
-            fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
+            const url = `https://www.ethercalc.net/_/${spreadsheetId}/csv.json`;
+            console.log('Fetching data from:', url);
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     console.log('Fetched data:', data);
-                    
+
                     if (Array.isArray(data) && data.length === 2) {
                         const names = data[0];
                         const values = data[1].map(value => parseFloat(value)).filter(value => !isNaN(value));
