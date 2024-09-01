@@ -4,7 +4,6 @@
     <title>AR Data Visualization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* Existing CSS styles */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -118,14 +117,10 @@
         }
         .chart-buttons {
             position: absolute;
-            top: 10px;
-            left: 150px;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
-            color: #333;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
             z-index: 1;
         }
         .chart-buttons button {
@@ -136,10 +131,30 @@
             padding: 10px 15px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 10px;
         }
         .chart-buttons button:hover {
-            background-color: #117a8b;
+            background-color: #138496;
+        }
+        .camera-controls {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1;
+        }
+        .camera-controls button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .camera-controls button:hover {
+            background-color: #c82333;
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
@@ -148,51 +163,13 @@
         window.onload = function() {
             alert("Most Optimal When used on a Mobile Device");
         };
-    </script>
-</head>
-<body>
-    <div class="info-panel">
-        <h1>AR Data Visualization</h1>
-        <p>This visualization displays data in an augmented reality environment.</p>
-        <button onclick="fetchData(spreadsheetId)">Refresh Data</button>
-    </div>
-    <div class="slider-container">
-        <label for="zoom-slider">Zoom Level</label>
-        <input type="range" id="zoom-slider" min="1" max="10" step="0.1" value="5">
-        <label for="rotation-slider">Rotation</label>
-        <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
-    </div>
-    <div class="data-display">
-        <h2>Spreadsheet Data</h2>
-        <table id="data-table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Data rows will be inserted here -->
-            </tbody>
-        </table>
-        <button onclick="window.open('https://ethercalc.net/qpmllytxss4g', '_blank')">Edit Spreadsheet</button>
-    </div>
-    <div class="chart-buttons">
-        <button onclick="switchToChart('bar')">Bar Chart</button>
-        <button onclick="switchToChart('pie')">Pie Chart</button>
-    </div>
-    <a-scene>
-        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
-        <a-light type="ambient" color="#ffffff"></a-light>
-        <a-light type="directional" position="2 4 3" target="#chart"></a-light>
-        <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
-    </a-scene>
-    <script>
+
         const barWidth = 0.5;
         const barDepth = 0.5;
         const maxHeight = 5;
         const pieRadius = 2;
-        const pieThickness = 0.2;
+        const pieThickness = 0.5;
+        let currentChartType = 'bar';
 
         function createBarChart(values, names) {
             const chartEntity = document.querySelector('#chart');
@@ -253,102 +230,137 @@
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            const total = values.reduce((acc, value) => acc + value, 0);
-            if (total === 0) {
-                alert("Invalid data for Pie Chart: Total value is zero.");
-                return;
-            }
+            let total = values.reduce((acc, val) => acc + val, 0);
+            let currentAngle = 0;
 
-            let startAngle = 0;
             values.forEach((value, index) => {
-                const sliceAngle = (value / total) * 2 * Math.PI;
-                const geometry = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, true, startAngle, sliceAngle);
-                const material = new THREE.MeshBasicMaterial({ color: new THREE.Color().setHSL(index / values.length, 0.8, 0.5), side: THREE.DoubleSide });
-                const pieSlice = new THREE.Mesh(geometry, material);
-                pieSlice.rotation.x = Math.PI / 2;
-                pieSlice.position.y = pieThickness / 2;
+                const proportion = value / total;
+                const angle = proportion * 2 * Math.PI;
+                const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+                const geometry = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
+                const material = new THREE.MeshBasicMaterial({ color: color });
+                const slice = new THREE.Mesh(geometry, material);
+                slice.rotation.x = Math.PI / 2;
+                slice.position.y = pieThickness / 2;
+
+                // Create a border highlight
+                const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
+                const borderGeometry = new THREE.CylinderGeometry(pieRadius + 0.05, pieRadius + 0.05, pieThickness + 0.05, 32, 1, false, currentAngle, angle);
+                const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                border.rotation.x = Math.PI / 2;
+                border.position.y = pieThickness / 2;
+
+                // Create the 3D effect
+                const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: color, emissive: color, emissiveIntensity: 0.3 });
+                const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: color.multiplyScalar(0.5), emissive: color.multiplyScalar(0.5), emissiveIntensity: 0.3 });
+                const highlightGeometry1 = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
+                const highlightGeometry2 = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
+
+                const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
+                const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
+
+                highlight1.rotation.x = Math.PI / 2;
+                highlight1.position.y = pieThickness / 2 + 0.01;
+                highlight2.rotation.x = Math.PI / 2;
+                highlight2.position.y = pieThickness / 2 - 0.01;
 
                 const meshEntity = new AFRAME.THREE.Object3D();
-                meshEntity.add(pieSlice);
+                meshEntity.add(slice);
+                meshEntity.add(border);
+                meshEntity.add(highlight1);
+                meshEntity.add(highlight2);
 
                 const wrapperEntity = document.createElement('a-entity');
                 wrapperEntity.setObject3D('mesh', meshEntity);
                 chartEntity.appendChild(wrapperEntity);
 
-                startAngle += sliceAngle;
+                currentAngle += angle;
+
+                // Add text label
+                const text = document.createElement('a-text');
+                text.setAttribute('value', names[index] || `Item ${index}`);
+                text.setAttribute('position', `0 ${pieThickness / 2 + 0.5} 0`);
+                text.setAttribute('align', 'center');
+                text.setAttribute('color', '#000000'); // Black text for visibility
+                chartEntity.appendChild(text);
             });
         }
 
         function switchToChart(type) {
-            const spreadsheetId = 'qpmllytxss4g'; // Update this with your actual spreadsheet ID
-            fetchData(spreadsheetId, type);
+            currentChartType = type;
+            // Call a function to refresh the chart with the selected type
+            // Assuming fetchData function fetches and passes data to createBarChart and createPieChart
+            fetchData('spreadsheetId', type);
         }
 
         function fetchData(spreadsheetId, chartType) {
-            fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Fetched data:', data);
-                    
-                    if (Array.isArray(data) && data.length === 2) {
-                        const names = data[0];
-                        const values = data[1].map(value => parseFloat(value)).filter(value => !isNaN(value));
+            // Simulated data fetch
+            const values = [10, 20, 30, 40];
+            const names = ['A', 'B', 'C', 'D'];
 
-                        console.log('Names:', names);
-                        console.log('Values:', values);
-
-                        updateChart([names, values], chartType);
-                        updateTable(names, values);
-                    } else {
-                        console.error('Unexpected data format:', data);
-                    }
-                })
-                .catch(error => {
-                    console.error('Failed to fetch data:', error);
-                });
-        }
-
-        function updateChart(data, type) {
-            if (type === 'bar') {
-                createBarChart(data[1], data[0]);
-            } else if (type === 'pie') {
-                createPieChart(data[1], data[0]);
+            if (chartType === 'bar') {
+                createBarChart(values, names);
+            } else if (chartType === 'pie') {
+                createPieChart(values, names);
             }
         }
 
-        function updateTable(names, values) {
-            const tableBody = document.querySelector('#data-table tbody');
-            tableBody.innerHTML = '';
-
-            names.forEach((name, index) => {
-                const row = document.createElement('tr');
-                const categoryCell = document.createElement('td');
-                const valueCell = document.createElement('td');
-
-                categoryCell.textContent = name;
-                valueCell.textContent = values[index] || 'N/A';
-
-                row.appendChild(categoryCell);
-                row.appendChild(valueCell);
-                tableBody.appendChild(row);
-            });
+        function switchCameraView(view) {
+            const camera = document.querySelector('#camera');
+            if (view === 'top') {
+                camera.setAttribute('position', '0 10 0');
+                camera.setAttribute('rotation', '-90 0 0');
+            } else if (view === 'bottom') {
+                camera.setAttribute('position', '0 -10 0');
+                camera.setAttribute('rotation', '90 0 0');
+            } else {
+                camera.setAttribute('position', '0 1.6 5');
+                camera.setAttribute('rotation', '0 0 0');
+            }
         }
-
-        document.getElementById('zoom-slider').addEventListener('input', (event) => {
-            const zoomLevel = event.target.value;
-            const camera = document.querySelector('a-camera');
-            camera.setAttribute('position', `0 1.6 ${5 - zoomLevel}`);
-        });
-
-        document.getElementById('rotation-slider').addEventListener('input', (event) => {
-            const rotation = event.target.value;
-            const chart = document.querySelector('#chart');
-            chart.setAttribute('rotation', `0 ${rotation} 0`);
-        });
-
-        // Initial setup
-        const spreadsheetId = 'qpmllytxss4g'; // Update this with your actual spreadsheet ID
-        fetchData(spreadsheetId, 'bar');
     </script>
+</head>
+<body>
+    <div class="info-panel">
+        <h1>AR Data Visualization</h1>
+        <p>This visualization displays data in an augmented reality environment.</p>
+        <button onclick="fetchData('spreadsheetId', currentChartType)">Refresh Data</button>
+    </div>
+    <div class="slider-container">
+        <label for="zoom-slider">Zoom Level</label>
+        <input type="range" id="zoom-slider" min="1" max="10" step="0.1" value="5">
+        <label for="rotation-slider">Rotation</label>
+        <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
+    </div>
+    <div class="data-display">
+        <h2>Spreadsheet Data</h2>
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data rows will be inserted here -->
+            </tbody>
+        </table>
+        <button onclick="window.open('https://ethercalc.net/qpmllytxss4g', '_blank')">Edit Spreadsheet</button>
+    </div>
+    <div class="chart-buttons">
+        <button onclick="switchToChart('bar')">Bar Chart</button>
+        <button onclick="switchToChart('pie')">Pie Chart</button>
+    </div>
+    <div class="camera-controls">
+        <button onclick="switchCameraView('top')">Top View</button>
+        <button onclick="switchCameraView('bottom')">Bottom View</button>
+        <button onclick="switchCameraView('default')">Default View</button>
+    </div>
+    <a-scene>
+        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
+        <a-light type="ambient" color="#ffffff"></a-light>
+        <a-light type="directional" position="2 4 3" target="#chart"></a-light>
+        <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
+    </a-scene>
 </body>
 </html>
