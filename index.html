@@ -115,15 +115,45 @@
         .data-display button:hover {
             background-color: #218838;
         }
+        .chart-toggle {
+            position: absolute;
+            top: 10px;
+            left: 200px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        .chart-toggle button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            display: block;
+            width: 100%;
+        }
+        .chart-toggle button:hover {
+            background-color: #0056b3;
+        }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script>
+        window.onload = function() {
+            alert("Most Optimal When used on a Mobile Device");
+        };
+    </script>
 </head>
 <body>
     <div class="info-panel">
         <h1>AR Data Visualization</h1>
         <p>This visualization displays data in an augmented reality environment.</p>
         <button onclick="fetchData(spreadsheetId)">Refresh Data</button>
-        <button onclick="toggleChart()">Toggle Chart</button>
     </div>
     <div class="slider-container">
         <label for="zoom-slider">Zoom Level</label>
@@ -146,6 +176,10 @@
         </table>
         <button onclick="window.open('https://ethercalc.net/qpmllytxss4g', '_blank')">Edit Spreadsheet</button>
     </div>
+    <div class="chart-toggle">
+        <button onclick="setChartType('pie')">Show Pie Chart</button>
+        <button onclick="setChartType('bar')">Show 3D Bar Graph</button>
+    </div>
     <a-scene>
         <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
         <a-light type="ambient" color="#ffffff"></a-light>
@@ -155,8 +189,25 @@
     <script>
         let chartType = 'bar';  // Default chart type
 
-        function toggleChart() {
-            chartType = chartType === 'bar' ? 'pie' : 'bar';
+        function setChartType(type) {
+            chartType = type;
+            updateView();
+        }
+
+        function updateView() {
+            const camera = document.querySelector('#camera');
+            const chartEntity = document.querySelector('#chart');
+
+            if (chartType === 'pie') {
+                camera.setAttribute('position', '0 5 0');
+                camera.setAttribute('rotation', '-90 0 0');
+                chartEntity.setAttribute('position', '0 0 0');
+            } else {
+                camera.setAttribute('position', '0 1.6 5');
+                camera.setAttribute('rotation', '0 0 0');
+                chartEntity.setAttribute('position', '0 0 -5');
+            }
+
             fetchData(spreadsheetId);
         }
 
@@ -190,7 +241,7 @@
                 // Overlapping effect
                 const meshEntity = new AFRAME.THREE.Object3D();
                 meshEntity.add(bar);
-                chartEntity.object3D.add(meshEntity);
+                chartEntity.appendChild(meshEntity);
 
                 // Add text label
                 const text = document.createElement('a-text');
@@ -209,65 +260,35 @@
             values.forEach((value, index) => {
                 const sliceAngle = (value / total) * Math.PI * 2;
                 const geometry = new THREE.CylinderGeometry(2, 2, 0.2, 64, 1, false, cumulativeAngle, sliceAngle);
-                const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+                const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(`hsl(${index * 360 / values.length}, 100%, 50%)`) });
                 const slice = new THREE.Mesh(geometry, material);
-
+                slice.position.set(0, 0, 0);
+                slice.rotation.set(0, 0, -Math.PI / 2);
                 cumulativeAngle += sliceAngle;
 
-                // Overlapping effect
+                // Add to scene
                 const meshEntity = new AFRAME.THREE.Object3D();
                 meshEntity.add(slice);
-                chartEntity.object3D.add(meshEntity);
+                chartEntity.appendChild(meshEntity);
 
                 // Add text label
                 const text = document.createElement('a-text');
                 text.setAttribute('value', names[index] || `Item ${index}`);
-                text.setAttribute('position', `${Math.cos(cumulativeAngle - sliceAngle / 2) * 2} ${0.5} ${Math.sin(cumulativeAngle - sliceAngle / 2) * 2}`);
+                text.setAttribute('position', `0 1 0`);
                 text.setAttribute('align', 'center');
                 text.setAttribute('color', '#000000'); // Black text for visibility
                 chartEntity.appendChild(text);
             });
         }
 
-        const spreadsheetId = 'qpmllytxss4g';
-
         function fetchData(spreadsheetId) {
-            fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
-                .then(response => response.json())
-                .then(data => {
-                    if (Array.isArray(data) && data.length > 1) {
-                        const names = data.slice(1).map(row => row[0]);
-                        const values = data.slice(1).map(row => parseFloat(row[1]));
-                        createChart(values, names);
-
-                        // Update the data display table
-                        const tbody = document.querySelector('#data-table tbody');
-                        tbody.innerHTML = '';
-                        data.slice(1).forEach((row) => {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td>`;
-                            tbody.appendChild(tr);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching data:', error));
+            // Placeholder function for data fetching
+            const values = [10, 20, 30, 40];
+            const names = ['Category 1', 'Category 2', 'Category 3', 'Category 4'];
+            createChart(values, names);
         }
 
-        // Initial data fetch
-        fetchData(spreadsheetId);
-
-        // Zoom and rotation controls
-        const zoomSlider = document.getElementById('zoom-slider');
-        zoomSlider.addEventListener('input', () => {
-            const camera = document.getElementById('camera');
-            camera.setAttribute('position', `0 1.6 ${zoomSlider.value}`);
-        });
-
-        const rotationSlider = document.getElementById('rotation-slider');
-        rotationSlider.addEventListener('input', () => {
-            const chart = document.getElementById('chart');
-            chart.setAttribute('rotation', `0 ${rotationSlider.value} 0`);
-        });
+        fetchData('your-spreadsheet-id');
     </script>
 </body>
 </html>
