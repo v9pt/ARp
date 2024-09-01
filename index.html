@@ -129,6 +129,7 @@
         <h1>AR Data Visualization</h1>
         <p>This visualization displays data in an augmented reality environment.</p>
         <button onclick="fetchData(spreadsheetId)">Refresh Data</button>
+        <button onclick="toggleChart()">Toggle Chart</button>
     </div>
     <div class="slider-container">
         <label for="zoom-slider">Zoom Level</label>
@@ -158,114 +159,80 @@
         <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
     </a-scene>
     <script>
-        const barWidth = 0.5;
-        const barDepth = 0.5;
-        const maxHeight = 5;
+        let chartType = 'bar';  // Default chart type
 
-        function createChart(values, names, type = 'bar') {
+        function toggleChart() {
+            chartType = chartType === 'bar' ? 'pie' : 'bar';
+            fetchData(spreadsheetId);
+        }
+
+        function createChart(values, names) {
             const chartEntity = document.querySelector('#chart');
             while (chartEntity.firstChild) {
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            if (type === 'bar') {
-                values.forEach((value, index) => {
-                    const barHeight = (value / 100) * maxHeight;
-
-                    // Create the main bar
-                    const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                    const bar = new THREE.Mesh(geometry, material);
-                    bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
-
-                    // Create a border highlight
-                    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
-                    const borderGeometry = new THREE.BoxGeometry(barWidth + 0.05, barHeight + 0.05, barDepth + 0.05);
-                    const border = new THREE.Mesh(borderGeometry, borderMaterial);
-                    border.position.copy(bar.position);
-
-                    // Create the 3D effect
-                    const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.3 });
-                    const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0x004d00, emissive: 0x004d00, emissiveIntensity: 0.3 });
-                    const highlightGeometry1 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                    const highlightGeometry2 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-
-                    const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
-                    const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
-
-                    highlight1.position.set(bar.position.x, bar.position.y, bar.position.z + 0.01);
-                    highlight2.position.set(bar.position.x, bar.position.y, bar.position.z - 0.01);
-
-                    const meshEntity = new AFRAME.THREE.Object3D();
-                    meshEntity.add(bar);
-                    meshEntity.add(border);
-                    meshEntity.add(highlight1);
-                    meshEntity.add(highlight2);
-
-                    const wrapperEntity = document.createElement('a-entity');
-                    wrapperEntity.setObject3D('mesh', meshEntity);
-                    chartEntity.appendChild(wrapperEntity);
-
-                    // Add text label
-                    const text = document.createElement('a-text');
-                    text.setAttribute('value', names[index] || `Item ${index}`);
-                    text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
-                    text.setAttribute('align', 'center');
-                    text.setAttribute('color', '#000000'); // Black text for visibility
-                    chartEntity.appendChild(text);
-                });
-            } else if (type === 'scatter') {
-                values.forEach((value, index) => {
-                    const geometry = new THREE.SphereGeometry(0.1);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-                    const point = new THREE.Mesh(geometry, material);
-                    point.position.set(index * 0.5, value / 100 * maxHeight, 0);
-
-                    const meshEntity = new AFRAME.THREE.Object3D();
-                    meshEntity.add(point);
-
-                    const wrapperEntity = document.createElement('a-entity');
-                    wrapperEntity.setObject3D('mesh', meshEntity);
-                    chartEntity.appendChild(wrapperEntity);
-                });
-            } else if (type === 'pie') {
-                const totalValue = values.reduce((acc, value) => acc + value, 0);
-                let startAngle = 0;
-
-                values.forEach((value, index) => {
-                    const sliceAngle = (value / totalValue) * 2 * Math.PI;
-
-                    // Create the pie slice
-                    const geometry = new THREE.Shape();
-                    geometry.moveTo(0, 0);
-                    geometry.arc(0, 0, 1, startAngle, startAngle + sliceAngle, false);
-                    geometry.lineTo(0, 0);
-
-                    const extrudeSettings = { depth: 0.5, bevelEnabled: false };
-                    const geometry3D = new THREE.ExtrudeGeometry(geometry, extrudeSettings);
-                    const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
-
-                    const slice = new THREE.Mesh(geometry3D, material);
-                    slice.position.set(0, 0, -index * 0.6); // Stagger slices in depth for visibility
-
-                    const meshEntity = new AFRAME.THREE.Object3D();
-                    meshEntity.add(slice);
-
-                    const wrapperEntity = document.createElement('a-entity');
-                    wrapperEntity.setObject3D('mesh', meshEntity);
-                    chartEntity.appendChild(wrapperEntity);
-
-                    startAngle += sliceAngle;
-
-                    // Add text label
-                    const text = document.createElement('a-text');
-                    text.setAttribute('value', names[index] || `Item ${index}`);
-                    text.setAttribute('position', `${Math.cos(startAngle - sliceAngle / 2)} ${Math.sin(startAngle - sliceAngle / 2)} ${-index * 0.6}`);
-                    text.setAttribute('align', 'center');
-                    text.setAttribute('color', '#000000'); // Black text for visibility
-                    chartEntity.appendChild(text);
-                });
+            if (chartType === 'bar') {
+                createBarChart(values, names, chartEntity);
+            } else if (chartType === 'pie') {
+                createPieChart(values, names, chartEntity);
             }
+        }
+
+        function createBarChart(values, names, chartEntity) {
+            const barWidth = 0.5;
+            const barDepth = 0.5;
+            const maxHeight = 5;
+
+            values.forEach((value, index) => {
+                const barHeight = (value / 100) * maxHeight;
+
+                // Create the main bar
+                const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                const bar = new THREE.Mesh(geometry, material);
+                bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
+
+                // Overlapping effect
+                const meshEntity = new AFRAME.THREE.Object3D();
+                meshEntity.add(bar);
+                chartEntity.appendChild(meshEntity);
+
+                // Add text label
+                const text = document.createElement('a-text');
+                text.setAttribute('value', names[index] || `Item ${index}`);
+                text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
+                text.setAttribute('align', 'center');
+                text.setAttribute('color', '#000000'); // Black text for visibility
+                chartEntity.appendChild(text);
+            });
+        }
+
+        function createPieChart(values, names, chartEntity) {
+            const total = values.reduce((sum, val) => sum + val, 0);
+            let cumulativeAngle = 0;
+
+            values.forEach((value, index) => {
+                const sliceAngle = (value / total) * Math.PI * 2;
+                const geometry = new THREE.CylinderGeometry(2, 2, 0.2, 64, 1, false, cumulativeAngle, sliceAngle);
+                const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+                const slice = new THREE.Mesh(geometry, material);
+
+                cumulativeAngle += sliceAngle;
+
+                // Overlapping effect
+                const meshEntity = new AFRAME.THREE.Object3D();
+                meshEntity.add(slice);
+                chartEntity.appendChild(meshEntity);
+
+                // Add text label
+                const text = document.createElement('a-text');
+                text.setAttribute('value', names[index] || `Item ${index}`);
+                text.setAttribute('position', `${Math.cos(cumulativeAngle - sliceAngle / 2) * 2} ${0.5} ${Math.sin(cumulativeAngle - sliceAngle / 2) * 2}`);
+                text.setAttribute('align', 'center');
+                text.setAttribute('color', '#000000'); // Black text for visibility
+                chartEntity.appendChild(text);
+            });
         }
 
         function fetchData(spreadsheetId) {
@@ -273,61 +240,17 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Fetched data:', data);
-                    
-                    if (Array.isArray(data) && data.length === 2) {
-                        const names = data[0];
-                        const values = data[1].map(value => parseFloat(value)).filter(value => !isNaN(value));
-
-                        console.log('Names:', names);
-                        console.log('Values:', values);
-
-                        updateChart([names, values], 'pie');  // Change the chart type to 'pie' for pie chart
-                        updateTable(names, values);
-                    } else {
-                        console.error('Unexpected data format:', data);
+                    if (Array.isArray(data) && data.length > 1) {
+                        const names = data.slice(1).map(row => row[0]);  // First column for names
+                        const values = data.slice(1).map(row => parseFloat(row[1]));  // Second column for values
+                        createChart(values, names);
                     }
                 })
-                .catch(error => {
-                    console.error('Failed to fetch data:', error);
-                });
+                .catch(error => console.error('Error fetching data:', error));
         }
 
-        function updateChart(data, type) {
-            createChart(data[1], data[0], type);
-        }
-
-        function updateTable(names, values) {
-            const tableBody = document.querySelector('#data-table tbody');
-            tableBody.innerHTML = '';
-
-            names.forEach((name, index) => {
-                const row = document.createElement('tr');
-                const categoryCell = document.createElement('td');
-                const valueCell = document.createElement('td');
-
-                categoryCell.textContent = name;
-                valueCell.textContent = values[index] || 'N/A';
-
-                row.appendChild(categoryCell);
-                row.appendChild(valueCell);
-                tableBody.appendChild(row);
-            });
-        }
-
-        document.getElementById('zoom-slider').addEventListener('input', (event) => {
-            const zoomLevel = event.target.value;
-            const camera = document.querySelector('a-camera');
-            camera.setAttribute('position', `0 1.6 ${5 - zoomLevel}`);
-        });
-
-        document.getElementById('rotation-slider').addEventListener('input', (event) => {
-            const rotation = event.target.value;
-            const chart = document.querySelector('#chart');
-            chart.setAttribute('rotation', `0 ${rotation} 0`);
-        });
-
-        // Initial setup
-        const spreadsheetId = 'qpmllytxss4g'; // Update this with your actual spreadsheet ID
+        // Initial data fetch
+        const spreadsheetId = 'your_spreadsheet_id';
         fetchData(spreadsheetId);
     </script>
 </body>
