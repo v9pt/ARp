@@ -60,6 +60,7 @@
             font-size: 16px;
             color: #333;
             z-index: 1;
+            max-width: 300px;
         }
         .slider-container label {
             display: block;
@@ -115,27 +116,7 @@
         .data-display button:hover {
             background-color: #218838;
         }
-        .chart-buttons {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            display: flex;
-            gap: 10px;
-            z-index: 1;
-        }
-        .chart-buttons button {
-            background-color: #17a2b8;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .chart-buttons button:hover {
-            background-color: #138496;
-        }
-        .camera-controls {
+        .chart-buttons, .camera-controls {
             position: absolute;
             top: 60px;
             right: 10px;
@@ -144,85 +125,31 @@
             gap: 10px;
             z-index: 1;
         }
-        .camera-controls button {
-            background-color: #dc3545;
+        .chart-buttons button, .camera-controls button {
+            background-color: #007bff;
             color: #fff;
             border: none;
             border-radius: 5px;
-            padding: 10px 15px;
+            padding: 10px;
             cursor: pointer;
             font-size: 16px;
         }
-        .camera-controls button:hover {
-            background-color: #c82333;
+        .chart-buttons button:hover, .camera-controls button:hover {
+            background-color: #0056b3;
+        }
+        .camera-controls {
+            top: 60px;
+            right: 10px;
+        }
+        .chart-buttons {
+            bottom: 60px;
+            right: 10px;
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script>
-        window.onload = function() {
-            alert("Most Optimal When used on a Mobile Device");
-        };
-
-        const barWidth = 0.5;
-        const barDepth = 0.5;
-        const maxHeight = 5;
-        const pieRadius = 2;
-        const pieThickness = 0.5;
         let currentChartType = 'bar';
-
-        function createBarChart(values, names) {
-            const chartEntity = document.querySelector('#chart');
-            while (chartEntity.firstChild) {
-                chartEntity.removeChild(chartEntity.firstChild);
-            }
-
-            values.forEach((value, index) => {
-                const barHeight = (value / 100) * maxHeight;
-
-                // Create the main bar
-                const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                const bar = new THREE.Mesh(geometry, material);
-                bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
-
-                // Create a border highlight
-                const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
-                const borderGeometry = new THREE.BoxGeometry(barWidth + 0.05, barHeight + 0.05, barDepth + 0.05);
-                const border = new THREE.Mesh(borderGeometry, borderMaterial);
-                border.position.copy(bar.position);
-
-                // Create the 3D effect
-                const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.3 });
-                const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0x004d00, emissive: 0x004d00, emissiveIntensity: 0.3 });
-                const highlightGeometry1 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                const highlightGeometry2 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-
-                const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
-                const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
-
-                highlight1.position.set(bar.position.x, bar.position.y, bar.position.z + 0.01);
-                highlight2.position.set(bar.position.x, bar.position.y, bar.position.z - 0.01);
-
-                const meshEntity = new AFRAME.THREE.Object3D();
-                meshEntity.add(bar);
-                meshEntity.add(border);
-                meshEntity.add(highlight1);
-                meshEntity.add(highlight2);
-
-                const wrapperEntity = document.createElement('a-entity');
-                wrapperEntity.setObject3D('mesh', meshEntity);
-                chartEntity.appendChild(wrapperEntity);
-
-                // Add text label
-                const text = document.createElement('a-text');
-                text.setAttribute('value', names[index] || `Item ${index}`);
-                text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
-                text.setAttribute('align', 'center');
-                text.setAttribute('color', '#000000'); // Black text for visibility
-                chartEntity.appendChild(text);
-            });
-        }
 
         function createPieChart(values, names) {
             const chartEntity = document.querySelector('#chart');
@@ -230,27 +157,26 @@
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            let total = values.reduce((acc, val) => acc + val, 0);
+            const pieRadius = 2;
+            const pieThickness = 0.5;
             let currentAngle = 0;
 
             values.forEach((value, index) => {
-                const proportion = value / total;
-                const angle = proportion * 2 * Math.PI;
+                const angle = (value / values.reduce((a, b) => a + b, 0)) * 2 * Math.PI;
                 const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+
                 const geometry = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
                 const material = new THREE.MeshBasicMaterial({ color: color });
                 const slice = new THREE.Mesh(geometry, material);
                 slice.rotation.x = Math.PI / 2;
                 slice.position.y = pieThickness / 2;
 
-                // Create a border highlight
                 const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
                 const borderGeometry = new THREE.CylinderGeometry(pieRadius + 0.05, pieRadius + 0.05, pieThickness + 0.05, 32, 1, false, currentAngle, angle);
                 const border = new THREE.Mesh(borderGeometry, borderMaterial);
                 border.rotation.x = Math.PI / 2;
                 border.position.y = pieThickness / 2;
 
-                // Create the 3D effect
                 const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: color, emissive: color, emissiveIntensity: 0.3 });
                 const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: color.multiplyScalar(0.5), emissive: color.multiplyScalar(0.5), emissiveIntensity: 0.3 });
                 const highlightGeometry1 = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
@@ -276,91 +202,185 @@
 
                 currentAngle += angle;
 
-                // Add text label
                 const text = document.createElement('a-text');
                 text.setAttribute('value', names[index] || `Item ${index}`);
                 text.setAttribute('position', `0 ${pieThickness / 2 + 0.5} 0`);
                 text.setAttribute('align', 'center');
-                text.setAttribute('color', '#000000'); // Black text for visibility
+                text.setAttribute('color', '#000000');
                 chartEntity.appendChild(text);
             });
         }
 
-        function switchToChart(type) {
+        function createBarChart(values, names) {
+            const chartEntity = document.querySelector('#chart');
+            while (chartEntity.firstChild) {
+                chartEntity.removeChild(chartEntity.firstChild);
+            }
+
+            const barWidth = 0.5;
+            const barDepth = 0.5;
+            const maxHeight = 5;
+
+            values.forEach((value, index) => {
+                const barHeight = (value / 100) * maxHeight;
+
+                const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                const bar = new THREE.Mesh(geometry, material);
+                bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
+
+                const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
+                const borderGeometry = new THREE.BoxGeometry(barWidth + 0.05, barHeight + 0.05, barDepth + 0.05);
+                const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                border.position.copy(bar.position);
+
+                const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 });
+                const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 });
+                const highlightGeometry1 = new THREE.BoxGeometry(barWidth + 0.1, barHeight + 0.1, barDepth + 0.1);
+                const highlightGeometry2 = new THREE.BoxGeometry(barWidth + 0.1, barHeight + 0.1, barDepth + 0.1);
+
+                const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
+                const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
+
+                highlight1.position.copy(bar.position);
+                highlight2.position.copy(bar.position);
+                highlight1.position.y += 0.1;
+                highlight2.position.y -= 0.1;
+
+                const meshEntity = new AFRAME.THREE.Object3D();
+                meshEntity.add(bar);
+                meshEntity.add(border);
+                meshEntity.add(highlight1);
+                meshEntity.add(highlight2);
+
+                const wrapperEntity = document.createElement('a-entity');
+                wrapperEntity.setObject3D('mesh', meshEntity);
+                chartEntity.appendChild(wrapperEntity);
+
+                const text = document.createElement('a-text');
+                text.setAttribute('value', names[index] || `Item ${index}`);
+                text.setAttribute('position', `0 ${barHeight + 0.5} 0`);
+                text.setAttribute('align', 'center');
+                text.setAttribute('color', '#000000');
+                chartEntity.appendChild(text);
+            });
+        }
+
+        function switchChart(type) {
             currentChartType = type;
-            // Call a function to refresh the chart with the selected type
-            // Assuming fetchData function fetches and passes data to createBarChart and createPieChart
-            fetchData('spreadsheetId', type);
-        }
+            const values = [10, 20, 30, 40, 50];
+            const names = ['A', 'B', 'C', 'D', 'E'];
 
-        function fetchData(spreadsheetId, chartType) {
-            // Simulated data fetch
-            const values = [10, 20, 30, 40];
-            const names = ['A', 'B', 'C', 'D'];
-
-            if (chartType === 'bar') {
-                createBarChart(values, names);
-            } else if (chartType === 'pie') {
+            if (type === 'pie') {
                 createPieChart(values, names);
+            } else {
+                createBarChart(values, names);
             }
         }
 
-        function switchCameraView(view) {
-            const camera = document.querySelector('#camera');
-            if (view === 'top') {
+        document.addEventListener('DOMContentLoaded', () => {
+            switchChart('bar'); // Default chart
+
+            document.querySelector('#pie-button').addEventListener('click', () => switchChart('pie'));
+            document.querySelector('#bar-button').addEventListener('click', () => switchChart('bar'));
+
+            document.querySelector('#top-view').addEventListener('click', () => {
+                const camera = document.querySelector('[camera]');
                 camera.setAttribute('position', '0 10 0');
-                camera.setAttribute('rotation', '-90 0 0');
-            } else if (view === 'bottom') {
-                camera.setAttribute('position', '0 -10 0');
-                camera.setAttribute('rotation', '90 0 0');
-            } else {
-                camera.setAttribute('position', '0 1.6 5');
                 camera.setAttribute('rotation', '0 0 0');
-            }
-        }
+            });
+            document.querySelector('#bottom-view').addEventListener('click', () => {
+                const camera = document.querySelector('[camera]');
+                camera.setAttribute('position', '0 -10 0');
+                camera.setAttribute('rotation', '0 0 0');
+            });
+            document.querySelector('#default-view').addEventListener('click', () => {
+                const camera = document.querySelector('[camera]');
+                camera.setAttribute('position', '0 2 10');
+                camera.setAttribute('rotation', '0 0 0');
+            });
+
+            // Improve sliders
+            const zoomSlider = document.querySelector('#zoom-slider');
+            zoomSlider.addEventListener('input', () => {
+                const camera = document.querySelector('[camera]');
+                const zoomValue = zoomSlider.value;
+                camera.setAttribute('zoom', zoomValue);
+            });
+
+            const rotationSlider = document.querySelector('#rotation-slider');
+            rotationSlider.addEventListener('input', () => {
+                const camera = document.querySelector('[camera]');
+                const rotationValue = rotationSlider.value;
+                camera.setAttribute('rotation', `0 ${rotationValue} 0`);
+            });
+        });
     </script>
 </head>
 <body>
-    <div class="info-panel">
-        <h1>AR Data Visualization</h1>
-        <p>This visualization displays data in an augmented reality environment.</p>
-        <button onclick="fetchData('spreadsheetId', currentChartType)">Refresh Data</button>
-    </div>
-    <div class="slider-container">
-        <label for="zoom-slider">Zoom Level</label>
-        <input type="range" id="zoom-slider" min="1" max="10" step="0.1" value="5">
-        <label for="rotation-slider">Rotation</label>
-        <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
-    </div>
-    <div class="data-display">
-        <h2>Spreadsheet Data</h2>
-        <table id="data-table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Data rows will be inserted here -->
-            </tbody>
-        </table>
-        <button onclick="window.open('https://ethercalc.net/qpmllytxss4g', '_blank')">Edit Spreadsheet</button>
-    </div>
-    <div class="chart-buttons">
-        <button onclick="switchToChart('bar')">Bar Chart</button>
-        <button onclick="switchToChart('pie')">Pie Chart</button>
-    </div>
-    <div class="camera-controls">
-        <button onclick="switchCameraView('top')">Top View</button>
-        <button onclick="switchCameraView('bottom')">Bottom View</button>
-        <button onclick="switchCameraView('default')">Default View</button>
-    </div>
     <a-scene>
-        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
-        <a-light type="ambient" color="#ffffff"></a-light>
-        <a-light type="directional" position="2 4 3" target="#chart"></a-light>
-        <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
+        <!-- Chart Container -->
+        <a-entity id="chart" position="0 0 0"></a-entity>
+        
+        <!-- Camera -->
+        <a-camera position="0 2 10" rotation="0 0 0"></a-camera>
+        
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h1>AR Data Visualization</h1>
+            <p>Explore your data in 3D space with interactive charts.</p>
+            <button id="pie-button">Show Pie Chart</button>
+            <button id="bar-button">Show Bar Chart</button>
+        </div>
+        
+        <!-- Slider Controls -->
+        <div class="slider-container">
+            <label for="zoom-slider">Zoom:</label>
+            <input id="zoom-slider" type="range" min="1" max="10" step="0.1" value="5">
+            <label for="rotation-slider">Rotation:</label>
+            <input id="rotation-slider" type="range" min="0" max="360" step="1" value="0">
+        </div>
+        
+        <!-- Data Display -->
+        <div class="data-display">
+            <h2>Data Overview</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Item 1</td>
+                        <td>10</td>
+                    </tr>
+                    <tr>
+                        <td>Item 2</td>
+                        <td>20</td>
+                    </tr>
+                    <tr>
+                        <td>Item 3</td>
+                        <td>30</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button>Export Data</button>
+        </div>
+        
+        <!-- Chart Buttons -->
+        <div class="chart-buttons">
+            <button id="pie-button">Pie Chart</button>
+            <button id="bar-button">Bar Chart</button>
+        </div>
+
+        <!-- Camera Controls -->
+        <div class="camera-controls">
+            <button id="top-view">Top View</button>
+            <button id="bottom-view">Bottom View</button>
+            <button id="default-view">Default View</button>
+        </div>
     </a-scene>
 </body>
 </html>
