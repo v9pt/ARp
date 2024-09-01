@@ -178,21 +178,41 @@
                 values.forEach((value, index) => {
                     const barHeight = (value / 100) * maxHeight;
 
-                    // Create the main bar
+                    // Create the main bar with transparency
                     const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0x00ff00,
+                        transparent: true,
+                        opacity: 0.6 // Adjust opacity to control transparency
+                    });
                     const bar = new THREE.Mesh(geometry, material);
                     bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
 
-                    // Create a border highlight
-                    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
+                    // Create a border highlight with transparency
+                    const borderMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        opacity: 0.3,
+                        transparent: true
+                    });
                     const borderGeometry = new THREE.BoxGeometry(barWidth + 0.05, barHeight + 0.05, barDepth + 0.05);
                     const border = new THREE.Mesh(borderGeometry, borderMaterial);
                     border.position.copy(bar.position);
 
-                    // Create the 3D effect
-                    const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.3 });
-                    const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0x004d00, emissive: 0x004d00, emissiveIntensity: 0.3 });
+                    // Create the 3D effect with transparency
+                    const highlightMaterial1 = new THREE.MeshBasicMaterial({
+                        color: 0x00ff00,
+                        emissive: 0x00ff00,
+                        emissiveIntensity: 0.3,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                    const highlightMaterial2 = new THREE.MeshBasicMaterial({
+                        color: 0x004d00,
+                        emissive: 0x004d00,
+                        emissiveIntensity: 0.3,
+                        transparent: true,
+                        opacity: 0.4
+                    });
                     const highlightGeometry1 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
                     const highlightGeometry2 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
 
@@ -212,18 +232,35 @@
                     wrapperEntity.setObject3D('mesh', meshEntity);
                     chartEntity.appendChild(wrapperEntity);
 
-                    // Add text label
-                    const text = document.createElement('a-text');
-                    text.setAttribute('value', names[index] || `Item ${index}`);
-                    text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
-                    text.setAttribute('align', 'center');
-                    text.setAttribute('color', '#000000'); // Black text for visibility
-                    chartEntity.appendChild(text);
+                    // Adding text labels with transparency
+                    const textGeometry = new THREE.TextGeometry(names[index], {
+                        font: new THREE.FontLoader().parse(require('three/examples/fonts/helvetiker_regular.typeface.json')),
+                        size: 0.5,
+                        height: 0.1
+                    });
+                    const textMaterial = new THREE.MeshBasicMaterial({
+                        color: 0x000000,
+                        transparent: true,
+                        opacity: 0.7 // Adjust opacity to control text transparency
+                    });
+                    const text = new THREE.Mesh(textGeometry, textMaterial);
+                    text.position.set(bar.position.x, bar.position.y + barHeight / 2 + 0.5, bar.position.z);
+                    text.rotation.set(0, Math.PI / 2, 0); // Adjust rotation for readability
+                    text.geometry.center();
+
+                    const textEntity = document.createElement('a-entity');
+                    textEntity.setObject3D('mesh', text);
+                    textEntity.setAttribute('align', 'center');
+                    chartEntity.appendChild(textEntity);
                 });
             } else if (type === 'scatter') {
                 values.forEach((value, index) => {
                     const geometry = new THREE.SphereGeometry(0.1);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+                    const material = new THREE.MeshBasicMaterial({ 
+                        color: 0x0000ff,
+                        transparent: true,
+                        opacity: 0.6 // Adjust opacity to control transparency
+                    });
                     const point = new THREE.Mesh(geometry, material);
                     point.position.set(index * 0.5, value / 100 * maxHeight, 0);
 
