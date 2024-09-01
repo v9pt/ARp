@@ -15,31 +15,28 @@
             height: 100vh;
             display: block;
         }
-        .info-panel, .slider-container, .data-display {
+        .info-panel {
             position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 15px;
             background-color: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 15px;
             font-size: 16px;
             color: #333;
             z-index: 1;
         }
-        .info-panel {
-            top: 10px;
-            left: 10px;
+        .info-panel h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
         }
-        .slider-container {
-            top: 10px;
-            right: 10px;
+        .info-panel p {
+            margin: 5px 0;
+            line-height: 1.5;
         }
-        .data-display {
-            bottom: 60px;
-            left: 10px;
-            max-width: 80%;
-            overflow: auto;
-        }
-        .info-panel button, .data-display button {
+        .info-panel button {
             background-color: #007bff;
             color: #fff;
             border: none;
@@ -49,8 +46,46 @@
             font-size: 16px;
             margin-top: 10px;
         }
-        .info-panel button:hover, .data-display button:hover {
+        .info-panel button:hover {
             background-color: #0056b3;
+        }
+        .slider-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            color: #333;
+            z-index: 1;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .slider-container input[type="range"] {
+            width: 100%;
+        }
+        .data-display {
+            position: absolute;
+            bottom: 60px;
+            left: 10px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            color: #333;
+            z-index: 1;
+            max-width: 80%;
+            overflow: auto;
+        }
+        .data-display h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
         }
         .data-display table {
             width: 100%;
@@ -65,28 +100,44 @@
         .data-display th {
             background-color: #f4f4f4;
         }
-        .slider-container label {
+        .data-display button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
             display: block;
-            margin-bottom: 5px;
-        }
-        .slider-container input[type="range"] {
             width: 100%;
+        }
+        .data-display button:hover {
+            background-color: #218838;
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script>
+        window.onload = function() {
+            alert("Most Optimal When used on a Mobile Device");
+        };
+    </script>
 </head>
 <body>
     <div class="info-panel">
         <h1>AR Data Visualization</h1>
         <p>This visualization displays data in an augmented reality environment.</p>
-        <button onclick="fetchData()">Refresh Data</button>
+        <button onclick="fetchData(spreadsheetId)">Refresh Data</button>
     </div>
     <div class="slider-container">
         <label for="zoom-slider">Zoom Level</label>
         <input type="range" id="zoom-slider" min="1" max="10" step="0.1" value="5">
         <label for="rotation-slider">Rotation</label>
         <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
+        <label for="pie-slider">Pie Chart View</label>
+        <input type="range" id="pie-slider" min="0" max="360" step="1" value="0">
+        <button id="toggle-chart">Switch to Pie Chart</button>
     </div>
     <div class="data-display">
         <h2>Spreadsheet Data</h2>
@@ -104,62 +155,138 @@
         <button onclick="window.open('https://ethercalc.net/qpmllytxss4g', '_blank')">Edit Spreadsheet</button>
     </div>
     <a-scene>
-        <a-camera id="camera" position="0 1.6 5"></a-camera>
+        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
         <a-light type="ambient" color="#ffffff"></a-light>
-        <a-light type="directional" position="2 4 3"></a-light>
-        <a-entity id="chart" position="0 0 -5"></a-entity>
+        <a-light type="directional" position="2 4 3" target="#chart"></a-light>
+        <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
     </a-scene>
     <script>
         const barWidth = 0.5;
         const barDepth = 0.5;
         const maxHeight = 5;
 
-        function createChart(values, names) {
+        function createChart(values, names, type = 'bar') {
             const chartEntity = document.querySelector('#chart');
             while (chartEntity.firstChild) {
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            values.forEach((value, index) => {
-                const barHeight = (value / 100) * maxHeight;
+            if (type === 'bar') {
+                values.forEach((value, index) => {
+                    const barHeight = (value / 100) * maxHeight;
 
-                const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                const bar = new THREE.Mesh(geometry, material);
-                bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
+                    // Create the main bar
+                    const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    const bar = new THREE.Mesh(geometry, material);
+                    bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
 
-                chartEntity.setObject3D('mesh', bar);
+                    // Create a border highlight
+                    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
+                    const borderGeometry = new THREE.BoxGeometry(barWidth + 0.05, barHeight + 0.05, barDepth + 0.05);
+                    const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                    border.position.copy(bar.position);
 
-                const textGeometry = new THREE.TextGeometry(names[index], {
-                    font: new THREE.FontLoader().parse(require('three/examples/fonts/helvetiker_regular.typeface.json')),
-                    size: 0.5,
-                    height: 0.1
+                    // Create the 3D effect
+                    const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.3 });
+                    const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0x004d00, emissive: 0x004d00, emissiveIntensity: 0.3 });
+                    const highlightGeometry1 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
+                    const highlightGeometry2 = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
+
+                    const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
+                    const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
+
+                    highlight1.position.set(bar.position.x, bar.position.y, bar.position.z + 0.01);
+                    highlight2.position.set(bar.position.x, bar.position.y, bar.position.z - 0.01);
+
+                    const meshEntity = new AFRAME.THREE.Object3D();
+                    meshEntity.add(bar);
+                    meshEntity.add(border);
+                    meshEntity.add(highlight1);
+                    meshEntity.add(highlight2);
+
+                    const wrapperEntity = document.createElement('a-entity');
+                    wrapperEntity.setObject3D('mesh', meshEntity);
+                    chartEntity.appendChild(wrapperEntity);
+
+                    // Add text label
+                    const text = document.createElement('a-text');
+                    text.setAttribute('value', names[index] || `Item ${index}`);
+                    text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
+                    text.setAttribute('align', 'center');
+                    text.setAttribute('color', '#000000'); // Black text for visibility
+                    chartEntity.appendChild(text);
                 });
-                const textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-                const text = new THREE.Mesh(textGeometry, textMaterial);
-                text.position.set(bar.position.x, bar.position.y + barHeight / 2 + 0.5, bar.position.z);
-                text.rotation.set(0, Math.PI / 2, 0);
+            } else if (type === 'pie') {
+                createPieChart(values, names);
+            }
+        }
 
-                chartEntity.setObject3D('text', text);
+        function createPieChart(values, names) {
+            // Example of a simple pie chart
+            const chartEntity = document.querySelector('#chart');
+            while (chartEntity.firstChild) {
+                chartEntity.removeChild(chartEntity.firstChild);
+            }
+
+            const radius = 2;
+            let startAngle = 0;
+            values.forEach((value, index) => {
+                const sliceAngle = (value / values.reduce((a, b) => a + b, 0)) * 2 * Math.PI;
+                const endAngle = startAngle + sliceAngle;
+
+                // Create a slice
+                const sliceGeometry = new THREE.Geometry();
+                sliceGeometry.vertices.push(
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(radius * Math.cos(startAngle), radius * Math.sin(startAngle), 0),
+                    new THREE.Vector3(radius * Math.cos(endAngle), radius * Math.sin(endAngle), 0)
+                );
+                sliceGeometry.faces.push(new THREE.Face3(0, 1, 2));
+                sliceGeometry.computeFaceNormals();
+
+                const sliceMaterial = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+                const sliceMesh = new THREE.Mesh(sliceGeometry, sliceMaterial);
+                chartEntity.appendChild(sliceMesh);
+
+                startAngle = endAngle;
+
+                // Add text label
+                const text = document.createElement('a-text');
+                text.setAttribute('value', names[index] || `Item ${index}`);
+                text.setAttribute('position', `${radius * 0.7 * Math.cos(startAngle + sliceAngle / 2)} ${radius * 0.7 * Math.sin(startAngle + sliceAngle / 2)} 0`);
+                text.setAttribute('align', 'center');
+                text.setAttribute('color', '#000000'); // Black text for visibility
+                chartEntity.appendChild(text);
             });
         }
 
-        function fetchData() {
-            const url = 'https://www.ethercalc.net/_/qpmllytxss4g/csv.json';
-            
-            fetch(url)
+        function fetchData(spreadsheetId) {
+            fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Fetched data:', data);
+                    
                     if (Array.isArray(data) && data.length === 2) {
                         const names = data[0];
                         const values = data[1].map(value => parseFloat(value)).filter(value => !isNaN(value));
-                        createChart(values, names);
+
+                        console.log('Names:', names);
+                        console.log('Values:', values);
+
+                        updateChart([names, values], 'bar');
                         updateTable(names, values);
                     } else {
                         console.error('Unexpected data format:', data);
                     }
                 })
-                .catch(error => console.error('Failed to fetch data:', error));
+                .catch(error => {
+                    console.error('Failed to fetch data:', error);
+                });
+        }
+
+        function updateChart(data, type) {
+            createChart(data[1], data[0], type);
         }
 
         function updateTable(names, values) {
@@ -192,8 +319,21 @@
             chart.setAttribute('rotation', `0 ${rotation} 0`);
         });
 
+        document.getElementById('pie-slider').addEventListener('input', (event) => {
+            const pieRotation = event.target.value;
+            const pieChart = document.querySelector('#chart');
+            pieChart.setAttribute('rotation', `0 ${pieRotation} 0`);
+        });
+
+        document.getElementById('toggle-chart').addEventListener('click', () => {
+            const chartType = document.getElementById('toggle-chart').textContent.includes('Pie Chart') ? 'pie' : 'bar';
+            updateChart([[], []], chartType);
+            document.getElementById('toggle-chart').textContent = chartType === 'pie' ? 'Switch to Bar Chart' : 'Switch to Pie Chart';
+        });
+
         // Initial setup
-        fetchData();
+        const spreadsheetId = 'qpmllytxss4g'; // Update this with your actual spreadsheet ID
+        fetchData(spreadsheetId);
     </script>
 </body>
 </html>
