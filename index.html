@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Financial Model Visualization</title>
+    <title>AR Financial and Data Visualization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
@@ -15,7 +15,7 @@
             height: 100vh;
             display: block;
         }
-        .info-panel, .slider-container, .data-display {
+        .info-panel, .slider-container, .data-display, .view-toggle {
             position: absolute;
             background-color: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
@@ -42,6 +42,11 @@
             max-width: 80%;
             overflow: auto;
         }
+        .view-toggle {
+            top: 10px;
+            left: 220px;
+            padding: 10px;
+        }
         h1, h2 {
             margin: 0;
         }
@@ -62,14 +67,20 @@
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
 </head>
 <body>
     <div class="info-panel">
-        <h1>Financial Model AR Visualization</h1>
-        <p>Adjust variables to see financial forecasts in AR.</p>
+        <h1>AR Financial and Data Visualization</h1>
+        <p>Adjust variables to see financial forecasts or data in AR.</p>
+        <button onclick="fetchData(spreadsheetId)">Refresh Data</button>
+    </div>
+    
+    <div class="view-toggle">
+        <button onclick="switchView('financial')">Show Financial Model</button>
+        <button onclick="switchView('3d')">Show 3D Bar Graph</button>
     </div>
 
-    <!-- Sliders to Adjust Financial Variables -->
     <div class="slider-container">
         <label for="revenue-slider">Revenue ($)</label>
         <input type="range" id="revenue-slider" min="10000" max="1000000" step="10000" value="500000">
@@ -79,18 +90,15 @@
         
         <label for="margin-slider">Profit Margin (%)</label>
         <input type="range" id="margin-slider" min="0" max="100" step="1" value="20">
-
-        <!-- Zoom Slider -->
+        
         <label for="zoom-slider">Zoom</label>
         <input type="range" id="zoom-slider" min="2" max="15" step="0.1" value="5">
-
-        <!-- Rotation Slider -->
+        
         <label for="rotation-slider">Rotate Chart</label>
         <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
     </div>
 
-    <!-- Display Financial Data -->
-    <div class="data-display">
+    <div class="data-display" id="financial-data-display">
         <h2>Financial Data</h2>
         <table>
             <thead>
@@ -121,7 +129,7 @@
     </div>
 
     <a-scene>
-        <a-camera position="0 1.6 5"></a-camera>
+        <a-camera id="camera" position="0 1.6 5"></a-camera>
         <a-light type="ambient" color="#ffffff"></a-light>
         <a-light type="directional" position="2 4 3"></a-light>
         <a-entity id="chart" position="0 0 -5"></a-entity>
@@ -131,17 +139,16 @@
         const chartData = {
             revenue: 500000,
             costs: 200000,
+            profit: 300000,
             profitMargin: 20
         };
 
-        // Function to calculate and update profit
         function calculateProfit() {
             chartData.profit = chartData.revenue - chartData.costs;
             chartData.profitMargin = (chartData.profit / chartData.revenue) * 100;
             updateFinancialDisplay();
         }
 
-        // Update financial display values
         function updateFinancialDisplay() {
             document.getElementById('revenue-display').textContent = `$${chartData.revenue.toLocaleString()}`;
             document.getElementById('cost-display').textContent = `$${chartData.costs.toLocaleString()}`;
@@ -150,26 +157,20 @@
             updateChart();
         }
 
-        // Function to create or update 3D chart
         function updateChart() {
             const chartEntity = document.querySelector('#chart');
-
-            // Clear previous bars
             while (chartEntity.firstChild) {
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            // Data for the bars
             const values = [chartData.revenue, chartData.costs, chartData.profit];
             const names = ['Revenue', 'Costs', 'Profit'];
-            const colors = ['green', 'red', 'blue'];  // Use predefined A-Frame colors
+            const colors = ['green', 'red', 'blue'];
 
-            // Create bars dynamically
             values.forEach((value, index) => {
-                const height = (value / 1000000) * 5;  // Scale the height based on value
-                const positionX = (index - 1) * 1.2;  // Reduce spacing between bars
+                const height = (value / 1000000) * 5;
+                const positionX = (index - 1) * 1.2;
 
-                // Create a bar (a-box) for each value
                 const bar = document.createElement('a-box');
                 bar.setAttribute('color', colors[index]);
                 bar.setAttribute('depth', 0.5);
@@ -177,10 +178,8 @@
                 bar.setAttribute('height', height);
                 bar.setAttribute('position', { x: positionX, y: height / 2, z: 0 });
 
-                // Append the bar to the chart entity
                 chartEntity.appendChild(bar);
 
-                // Add a label above each bar
                 const label = document.createElement('a-text');
                 label.setAttribute('value', names[index]);
                 label.setAttribute('align', 'center');
@@ -189,37 +188,90 @@
             });
         }
 
-        // Handle slider input for revenue, costs, and margin
+        function createChart(values, names, type = 'bar') {
+            const chartEntity = document.querySelector('#chart');
+            while (chartEntity.firstChild) {
+                chartEntity.removeChild(chartEntity.firstChild);
+            }
+
+            if (type === 'bar') {
+                values.forEach((value, index) => {
+                    const barHeight = (value / 100) * 5;
+
+                    const geometry = new THREE.BoxGeometry(0.5, barHeight, 0.5);
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    const bar = new THREE.Mesh(geometry, material);
+                    bar.position.set(index * (0.55) - (values.length / 2 * 0.55), barHeight / 2, 0);
+
+                    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
+                    const borderGeometry = new THREE.BoxGeometry(0.55, barHeight + 0.05, 0.55);
+                    const border = new THREE.Mesh(borderGeometry, borderMaterial);
+                    border.position.copy(bar.position);
+
+                    const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.3 });
+                    const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0x004d00, emissive: 0x004d00, emissiveIntensity: 0.3 });
+                    const highlightGeometry1 = new THREE.BoxGeometry(0.5, barHeight, 0.5);
+                    const highlightGeometry2 = new THREE.BoxGeometry(0.5, barHeight, 0.5);
+                    const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
+                    const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
+
+                    highlight1.position.copy(bar.position);
+                    highlight2.position.copy(bar.position);
+
+                    chartEntity.appendChild(bar);
+                    chartEntity.appendChild(border);
+                    chartEntity.appendChild(highlight1);
+                    chartEntity.appendChild(highlight2);
+                });
+            }
+        }
+
+        function fetchData(spreadsheetId) {
+            // Fetch data from EtherCalc or any other source
+            // This function should update `chartData` and call `updateFinancialDisplay()`
+        }
+
         document.getElementById('revenue-slider').addEventListener('input', (event) => {
-            chartData.revenue = parseInt(event.target.value, 10);
+            chartData.revenue = parseFloat(event.target.value);
             calculateProfit();
         });
 
         document.getElementById('cost-slider').addEventListener('input', (event) => {
-            chartData.costs = parseInt(event.target.value, 10);
+            chartData.costs = parseFloat(event.target.value);
             calculateProfit();
         });
 
         document.getElementById('margin-slider').addEventListener('input', (event) => {
-            chartData.profitMargin = parseInt(event.target.value, 10);
-            chartData.profit = chartData.revenue * (chartData.profitMargin / 100);
+            chartData.profitMargin = parseFloat(event.target.value);
             updateFinancialDisplay();
         });
 
-        // Zoom functionality: change the camera's Z-position
         document.getElementById('zoom-slider').addEventListener('input', (event) => {
-            const zoomValue = event.target.value;
+            const zoomValue = parseFloat(event.target.value);
             document.querySelector('a-camera').setAttribute('position', `0 1.6 ${zoomValue}`);
         });
 
-        // Rotate chart functionality: rotate the chart around Y-axis
         document.getElementById('rotation-slider').addEventListener('input', (event) => {
-            const rotationValue = event.target.value;
+            const rotationValue = parseFloat(event.target.value);
             document.querySelector('#chart').setAttribute('rotation', `0 ${rotationValue} 0`);
         });
 
-        // Initialize the chart
-        updateChart();
+        function switchView(view) {
+            const financialDataDisplay = document.getElementById('financial-data-display');
+            const aScene = document.querySelector('a-scene');
+            if (view === 'financial') {
+                financialDataDisplay.style.display = 'block';
+                aScene.style.display = 'none';
+                updateFinancialDisplay();
+            } else {
+                financialDataDisplay.style.display = 'none';
+                aScene.style.display = 'block';
+                createChart([chartData.revenue, chartData.costs, chartData.profit], ['Revenue', 'Costs', 'Profit']);
+            }
+        }
+
+        // Initialize
+        switchView('financial');
     </script>
 </body>
 </html>
