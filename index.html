@@ -137,7 +137,7 @@
                 </tr>
                 <tr>
                     <td>Profit</td>
-                    <td id="profit-display">$100,000</td>
+                    <td id="profit-display">$300,000</td>
                 </tr>
                 <tr>
                     <td>Profit Margin</td>
@@ -179,14 +179,12 @@
             profitMargin: 20
         };
 
-        // Function to calculate profit and update display
         function calculateProfit() {
             chartData.profit = chartData.revenue - chartData.costs;
             chartData.profitMargin = (chartData.profit / chartData.revenue) * 100;
             updateFinancialDisplay();
         }
 
-        // Function to update financial data display
         function updateFinancialDisplay() {
             document.getElementById('revenue-display').textContent = `$${chartData.revenue.toLocaleString()}`;
             document.getElementById('cost-display').textContent = `$${chartData.costs.toLocaleString()}`;
@@ -195,7 +193,6 @@
             updateChart();
         }
 
-        // Function to update 3D chart
         function updateChart() {
             const chartEntity = document.querySelector('#chart');
             while (chartEntity.firstChild) {
@@ -204,32 +201,28 @@
 
             const values = [chartData.revenue, chartData.costs, chartData.profit];
             const names = ['Revenue', 'Costs', 'Profit'];
-            const colors = ['#4CAF50', '#F44336', '#2196F3']; // More visible colors
+            const colors = ['#4CAF50', '#F44336', '#2196F3']; 
 
             values.forEach((value, index) => {
-                const height = (value / 1000000) * 5;  // Scale bar height relative to value
-                const positionX = (index - 1) * 1.2;  // Position bars next to each other
+                const height = (value / 1000000) * 5;  
+                const positionX = (index - 1) * 1.2;  
 
-                // Create bar
                 const bar = document.createElement('a-box');
                 bar.setAttribute('color', colors[index]);
                 bar.setAttribute('depth', 0.5);
                 bar.setAttribute('width', 0.5);
                 bar.setAttribute('height', height);
-                bar.setAttribute('position', `${positionX} ${height / 2} 0`);
+                bar.setAttribute('position', `${positionX} ${height / 2} -2`);
                 chartEntity.appendChild(bar);
 
-                // Create label
                 const label = document.createElement('a-text');
                 label.setAttribute('value', names[index]);
                 label.setAttribute('align', 'center');
-                label.setAttribute('position', `${positionX} ${height + 0.5} 0`);
+                label.setAttribute('position', `${positionX} ${height + 0.5} -2`);
                 chartEntity.appendChild(label);
             });
         }
 
-        // Fetch and Update 3D Chart Data
-        const spreadsheetId = 'qpmllytxss4g';
         function fetchData(spreadsheetId) {
             fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
                 .then(response => response.json())
@@ -256,9 +249,9 @@
 
             if (type === 'bar') {
                 data[1].forEach((value, index) => {
-                    const barHeight = (value / 100) * 5;
+                    const barHeight = (value / Math.max(...data[1])) * 5; 
                     const bar = document.createElement('a-box');
-                    bar.setAttribute('color', '#FFC107'); // Updated color for 3D Bar Graph
+                    bar.setAttribute('color', '#FFC107'); 
                     bar.setAttribute('depth', 0.5);
                     bar.setAttribute('width', 0.5);
                     bar.setAttribute('height', barHeight);
@@ -289,7 +282,6 @@
             });
         }
 
-        // Event Listeners
         document.getElementById('revenue-slider').addEventListener('input', (event) => {
             chartData.revenue = parseInt(event.target.value, 10);
             calculateProfit();
@@ -318,7 +310,6 @@
 
         document.getElementById('refresh-data-button').addEventListener('click', () => fetchData(spreadsheetId));
 
-        // Toggle Between Visualizations
         document.getElementById('toggle-financial').addEventListener('click', () => {
             document.getElementById('financial-sliders').style.display = 'block';
             document.getElementById('financial-data-display').style.display = 'block';
@@ -343,7 +334,6 @@
             fetchData(spreadsheetId);
         });
 
-        // Initialize Financial Model by default
         updateChart();
     </script>
 </body>
