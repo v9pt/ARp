@@ -201,7 +201,7 @@
 
             const values = [chartData.revenue, chartData.costs, chartData.profit];
             const names = ['Revenue', 'Costs', 'Profit'];
-            const colors = ['green', 'red', 'blue'];
+            const colors = ['#4CAF50', '#F44336', '#2196F3']; // More visible colors
 
             values.forEach((value, index) => {
                 const height = (value / 1000000) * 5;  // Scale bar height relative to value
@@ -282,7 +282,7 @@
                 data[1].forEach((value, index) => {
                     const barHeight = (value / 100) * 5;
                     const bar = document.createElement('a-box');
-                    bar.setAttribute('color', 'green');
+                    bar.setAttribute('color', '#FFC107'); // New color for 3D Bar Graph
                     bar.setAttribute('depth', 0.5);
                     bar.setAttribute('width', 0.5);
                     bar.setAttribute('height', barHeight);
