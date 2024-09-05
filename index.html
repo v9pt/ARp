@@ -113,7 +113,7 @@
     </div>
 
     <a-scene>
-        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
+        <a-camera id="camera" position="0 1.6 8" look-controls="pointerLockEnabled: true"></a-camera>
         <a-light type="ambient" color="#ffffff"></a-light>
         <a-light type="directional" position="2 4 3" target="#chart"></a-light>
         <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
@@ -164,7 +164,7 @@
                 const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
                 const material = new THREE.MeshBasicMaterial({ color: colors[index] });
                 const bar = new THREE.Mesh(geometry, material);
-                bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
+                bar.position.set(index * (barWidth + 0.5) - (values.length / 2 * (barWidth + 0.5)), barHeight / 2, 0);
 
                 const wrapperEntity = document.createElement('a-entity');
                 wrapperEntity.setObject3D('mesh', bar);
