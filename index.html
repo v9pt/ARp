@@ -212,13 +212,13 @@
                 bar.setAttribute('depth', 0.5);
                 bar.setAttribute('width', 0.5);
                 bar.setAttribute('height', height);
-                bar.setAttribute('position', { x: positionX, y: height / 2, z: 0 });
+                bar.setAttribute('position', `${positionX} ${height / 2} 0`);
                 chartEntity.appendChild(bar);
 
                 const label = document.createElement('a-text');
                 label.setAttribute('value', names[index]);
                 label.setAttribute('align', 'center');
-                label.setAttribute('position', { x: positionX, y: height + 0.5, z: 0 });
+                label.setAttribute('position', `${positionX} ${height + 0.5} 0`);
                 chartEntity.appendChild(label);
             });
         }
@@ -289,8 +289,8 @@
 
                     const text = document.createElement('a-text');
                     text.setAttribute('value', data[0][index]);
-                    text.setAttribute('position', `${index * 0.6 - (data[1].length / 2) * 0.6} ${barHeight + 0.5} 0`);
                     text.setAttribute('align', 'center');
+                    text.setAttribute('position', `${index * 0.6 - (data[1].length / 2) * 0.6} ${barHeight + 0.5} 0`);
                     chartEntity.appendChild(text);
                 });
             }
