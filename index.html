@@ -204,9 +204,10 @@
             const colors = ['green', 'red', 'blue'];
 
             values.forEach((value, index) => {
-                const height = (value / 1000000) * 5;
-                const positionX = (index - 1) * 1.2;
+                const height = (value / 1000000) * 5;  // Scale bar height relative to value
+                const positionX = (index - 1) * 1.2;  // Position bars next to each other
 
+                // Create bar
                 const bar = document.createElement('a-box');
                 bar.setAttribute('color', colors[index]);
                 bar.setAttribute('depth', 0.5);
@@ -215,6 +216,7 @@
                 bar.setAttribute('position', `${positionX} ${height / 2} 0`);
                 chartEntity.appendChild(bar);
 
+                // Create label
                 const label = document.createElement('a-text');
                 label.setAttribute('value', names[index]);
                 label.setAttribute('align', 'center');
