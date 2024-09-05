@@ -175,16 +175,18 @@
         const chartData = {
             revenue: 500000,
             costs: 200000,
+            profit: 300000,
             profitMargin: 20
         };
 
-        // Initialize the Financial Model Visualization
+        // Function to calculate profit and update display
         function calculateProfit() {
             chartData.profit = chartData.revenue - chartData.costs;
             chartData.profitMargin = (chartData.profit / chartData.revenue) * 100;
             updateFinancialDisplay();
         }
 
+        // Function to update financial data display
         function updateFinancialDisplay() {
             document.getElementById('revenue-display').textContent = `$${chartData.revenue.toLocaleString()}`;
             document.getElementById('cost-display').textContent = `$${chartData.costs.toLocaleString()}`;
@@ -193,6 +195,7 @@
             updateChart();
         }
 
+        // Function to update 3D chart
         function updateChart() {
             const chartEntity = document.querySelector('#chart');
             while (chartEntity.firstChild) {
@@ -225,35 +228,8 @@
             });
         }
 
-        document.getElementById('revenue-slider').addEventListener('input', (event) => {
-            chartData.revenue = parseInt(event.target.value, 10);
-            calculateProfit();
-        });
-
-        document.getElementById('cost-slider').addEventListener('input', (event) => {
-            chartData.costs = parseInt(event.target.value, 10);
-            calculateProfit();
-        });
-
-        document.getElementById('margin-slider').addEventListener('input', (event) => {
-            chartData.profitMargin = parseInt(event.target.value, 10);
-            chartData.profit = chartData.revenue * (chartData.profitMargin / 100);
-            updateFinancialDisplay();
-        });
-
-        document.getElementById('zoom-slider').addEventListener('input', (event) => {
-            const zoomValue = event.target.value;
-            document.querySelector('a-camera').setAttribute('position', `0 1.6 ${zoomValue}`);
-        });
-
-        document.getElementById('rotation-slider').addEventListener('input', (event) => {
-            const rotationValue = event.target.value;
-            document.querySelector('#chart').setAttribute('rotation', `0 ${rotationValue} 0`);
-        });
-
-        // 3D Bar Graph Visualization
+        // Fetch and Update 3D Chart Data
         const spreadsheetId = 'qpmllytxss4g';
-
         function fetchData(spreadsheetId) {
             fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
                 .then(response => response.json())
@@ -282,7 +258,7 @@
                 data[1].forEach((value, index) => {
                     const barHeight = (value / 100) * 5;
                     const bar = document.createElement('a-box');
-                    bar.setAttribute('color', '#FFC107'); // New color for 3D Bar Graph
+                    bar.setAttribute('color', '#FFC107'); // Updated color for 3D Bar Graph
                     bar.setAttribute('depth', 0.5);
                     bar.setAttribute('width', 0.5);
                     bar.setAttribute('height', barHeight);
@@ -312,6 +288,33 @@
                 tableBody.appendChild(row);
             });
         }
+
+        // Event Listeners
+        document.getElementById('revenue-slider').addEventListener('input', (event) => {
+            chartData.revenue = parseInt(event.target.value, 10);
+            calculateProfit();
+        });
+
+        document.getElementById('cost-slider').addEventListener('input', (event) => {
+            chartData.costs = parseInt(event.target.value, 10);
+            calculateProfit();
+        });
+
+        document.getElementById('margin-slider').addEventListener('input', (event) => {
+            chartData.profitMargin = parseInt(event.target.value, 10);
+            chartData.profit = chartData.revenue * (chartData.profitMargin / 100);
+            updateFinancialDisplay();
+        });
+
+        document.getElementById('zoom-slider').addEventListener('input', (event) => {
+            const zoomValue = event.target.value;
+            document.querySelector('a-camera').setAttribute('position', `0 1.6 ${zoomValue}`);
+        });
+
+        document.getElementById('rotation-slider').addEventListener('input', (event) => {
+            const rotationValue = event.target.value;
+            document.querySelector('#chart').setAttribute('rotation', `0 ${rotationValue} 0`);
+        });
 
         document.getElementById('refresh-data-button').addEventListener('click', () => fetchData(spreadsheetId));
 
