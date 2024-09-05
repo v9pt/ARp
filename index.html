@@ -33,6 +33,7 @@
             top: 10px;
             right: 10px;
             padding: 10px;
+            width: 200px;
         }
         .data-display {
             bottom: 60px;
@@ -78,6 +79,14 @@
         
         <label for="margin-slider">Profit Margin (%)</label>
         <input type="range" id="margin-slider" min="0" max="100" step="1" value="20">
+
+        <!-- Zoom Slider -->
+        <label for="zoom-slider">Zoom</label>
+        <input type="range" id="zoom-slider" min="2" max="15" step="0.1" value="5">
+
+        <!-- Rotation Slider -->
+        <label for="rotation-slider">Rotate Chart</label>
+        <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
     </div>
 
     <!-- Display Financial Data -->
@@ -158,7 +167,7 @@
             // Create bars dynamically
             values.forEach((value, index) => {
                 const height = (value / 1000000) * 5;  // Scale the height based on value
-                const positionX = (index - 1) * 1.5;  // Space the bars
+                const positionX = (index - 1) * 1.2;  // Reduce spacing between bars
 
                 // Create a bar (a-box) for each value
                 const bar = document.createElement('a-box');
@@ -195,6 +204,18 @@
             chartData.profitMargin = parseInt(event.target.value, 10);
             chartData.profit = chartData.revenue * (chartData.profitMargin / 100);
             updateFinancialDisplay();
+        });
+
+        // Zoom functionality: change the camera's Z-position
+        document.getElementById('zoom-slider').addEventListener('input', (event) => {
+            const zoomValue = event.target.value;
+            document.querySelector('a-camera').setAttribute('position', `0 1.6 ${zoomValue}`);
+        });
+
+        // Rotate chart functionality: rotate the chart around Y-axis
+        document.getElementById('rotation-slider').addEventListener('input', (event) => {
+            const rotationValue = event.target.value;
+            document.querySelector('#chart').setAttribute('rotation', `0 ${rotationValue} 0`);
         });
 
         // Initialize the chart
