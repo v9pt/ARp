@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Financial and Data Visualization</title>
+    <title>AR Visualization: Financial Model & Data Graph</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
@@ -15,7 +15,7 @@
             height: 100vh;
             display: block;
         }
-        .info-panel, .slider-container, .data-display, .view-toggle {
+        .info-panel, .slider-container, .data-display {
             position: absolute;
             background-color: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
@@ -42,11 +42,6 @@
             max-width: 80%;
             overflow: auto;
         }
-        .view-toggle {
-            top: 10px;
-            left: 220px;
-            padding: 10px;
-        }
         h1, h2 {
             margin: 0;
         }
@@ -65,23 +60,44 @@
         button, input[type="range"] {
             width: 100%;
         }
+        .toggle-container {
+            position: absolute;
+            top: 10px;
+            right: 250px;
+            z-index: 1;
+        }
+        .toggle-container button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .toggle-container button.active {
+            background-color: #0056b3;
+        }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
 </head>
 <body>
-    <div class="info-panel">
-        <h1>AR Financial and Data Visualization</h1>
-        <p>Adjust variables to see financial forecasts or data in AR.</p>
-        <button onclick="fetchData(spreadsheetId)">Refresh Data</button>
-    </div>
-    
-    <div class="view-toggle">
-        <button onclick="switchView('financial')">Show Financial Model</button>
-        <button onclick="switchView('3d')">Show 3D Bar Graph</button>
+    <!-- Toggle Button for Visualization Modes -->
+    <div class="toggle-container">
+        <button id="toggle-financial" class="active">Financial Model</button>
+        <button id="toggle-3d-bar">3D Bar Graph</button>
     </div>
 
-    <div class="slider-container">
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <h1 id="info-title">Financial Model AR Visualization</h1>
+        <p id="info-description">Adjust variables to see financial forecasts in AR.</p>
+        <button id="refresh-data-button" style="display: none;">Refresh Data</button>
+    </div>
+
+    <!-- Sliders to Adjust Financial Variables -->
+    <div class="slider-container" id="financial-sliders">
         <label for="revenue-slider">Revenue ($)</label>
         <input type="range" id="revenue-slider" min="10000" max="1000000" step="10000" value="500000">
         
@@ -91,13 +107,16 @@
         <label for="margin-slider">Profit Margin (%)</label>
         <input type="range" id="margin-slider" min="0" max="100" step="1" value="20">
         
+        <!-- Zoom Slider -->
         <label for="zoom-slider">Zoom</label>
         <input type="range" id="zoom-slider" min="2" max="15" step="0.1" value="5">
         
+        <!-- Rotation Slider -->
         <label for="rotation-slider">Rotate Chart</label>
         <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
     </div>
 
+    <!-- Display Financial Data -->
     <div class="data-display" id="financial-data-display">
         <h2>Financial Data</h2>
         <table>
@@ -128,8 +147,25 @@
         </table>
     </div>
 
+    <!-- Data Display for 3D Bar Graph -->
+    <div class="data-display" id="bar-data-display" style="display: none;">
+        <h2>Spreadsheet Data</h2>
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <button onclick="window.open('https://ethercalc.net/qpmllytxss4g', '_blank')">Edit Spreadsheet</button>
+    </div>
+
+    <!-- AR Scene -->
     <a-scene>
-        <a-camera id="camera" position="0 1.6 5"></a-camera>
+        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
         <a-light type="ambient" color="#ffffff"></a-light>
         <a-light type="directional" position="2 4 3"></a-light>
         <a-entity id="chart" position="0 0 -5"></a-entity>
@@ -139,10 +175,10 @@
         const chartData = {
             revenue: 500000,
             costs: 200000,
-            profit: 300000,
             profitMargin: 20
         };
 
+        // Initialize the Financial Model Visualization
         function calculateProfit() {
             chartData.profit = chartData.revenue - chartData.costs;
             chartData.profitMargin = (chartData.profit / chartData.revenue) * 100;
@@ -177,7 +213,6 @@
                 bar.setAttribute('width', 0.5);
                 bar.setAttribute('height', height);
                 bar.setAttribute('position', { x: positionX, y: height / 2, z: 0 });
-
                 chartEntity.appendChild(bar);
 
                 const label = document.createElement('a-text');
@@ -188,90 +223,123 @@
             });
         }
 
-        function createChart(values, names, type = 'bar') {
+        document.getElementById('revenue-slider').addEventListener('input', (event) => {
+            chartData.revenue = parseInt(event.target.value, 10);
+            calculateProfit();
+        });
+
+        document.getElementById('cost-slider').addEventListener('input', (event) => {
+            chartData.costs = parseInt(event.target.value, 10);
+            calculateProfit();
+        });
+
+        document.getElementById('margin-slider').addEventListener('input', (event) => {
+            chartData.profitMargin = parseInt(event.target.value, 10);
+            chartData.profit = chartData.revenue * (chartData.profitMargin / 100);
+            updateFinancialDisplay();
+        });
+
+        document.getElementById('zoom-slider').addEventListener('input', (event) => {
+            const zoomValue = event.target.value;
+            document.querySelector('a-camera').setAttribute('position', `0 1.6 ${zoomValue}`);
+        });
+
+        document.getElementById('rotation-slider').addEventListener('input', (event) => {
+            const rotationValue = event.target.value;
+            document.querySelector('#chart').setAttribute('rotation', `0 ${rotationValue} 0`);
+        });
+
+        // 3D Bar Graph Visualization
+        const spreadsheetId = 'qpmllytxss4g';
+
+        function fetchData(spreadsheetId) {
+            fetch(`https://www.ethercalc.net/_/${spreadsheetId}/csv.json`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length === 2) {
+                        const names = data[0];
+                        const values = data[1].map(value => parseFloat(value)).filter(value => !isNaN(value));
+                        updateChart3D([names, values], 'bar');
+                        updateTable(names, values);
+                    } else {
+                        console.error('Unexpected data format:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to fetch data:', error);
+                });
+        }
+
+        function updateChart3D(data, type) {
             const chartEntity = document.querySelector('#chart');
             while (chartEntity.firstChild) {
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
             if (type === 'bar') {
-                values.forEach((value, index) => {
+                data[1].forEach((value, index) => {
                     const barHeight = (value / 100) * 5;
-
-                    const geometry = new THREE.BoxGeometry(0.5, barHeight, 0.5);
-                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                    const bar = new THREE.Mesh(geometry, material);
-                    bar.position.set(index * (0.55) - (values.length / 2 * 0.55), barHeight / 2, 0);
-
-                    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
-                    const borderGeometry = new THREE.BoxGeometry(0.55, barHeight + 0.05, 0.55);
-                    const border = new THREE.Mesh(borderGeometry, borderMaterial);
-                    border.position.copy(bar.position);
-
-                    const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.3 });
-                    const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0x004d00, emissive: 0x004d00, emissiveIntensity: 0.3 });
-                    const highlightGeometry1 = new THREE.BoxGeometry(0.5, barHeight, 0.5);
-                    const highlightGeometry2 = new THREE.BoxGeometry(0.5, barHeight, 0.5);
-                    const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
-                    const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
-
-                    highlight1.position.copy(bar.position);
-                    highlight2.position.copy(bar.position);
-
+                    const bar = document.createElement('a-box');
+                    bar.setAttribute('color', 'green');
+                    bar.setAttribute('depth', 0.5);
+                    bar.setAttribute('width', 0.5);
+                    bar.setAttribute('height', barHeight);
+                    bar.setAttribute('position', `${index * 0.6 - (data[1].length / 2) * 0.6} ${barHeight / 2} 0`);
                     chartEntity.appendChild(bar);
-                    chartEntity.appendChild(border);
-                    chartEntity.appendChild(highlight1);
-                    chartEntity.appendChild(highlight2);
+
+                    const text = document.createElement('a-text');
+                    text.setAttribute('value', data[0][index]);
+                    text.setAttribute('position', `${index * 0.6 - (data[1].length / 2) * 0.6} ${barHeight + 0.5} 0`);
+                    text.setAttribute('align', 'center');
+                    chartEntity.appendChild(text);
                 });
             }
         }
 
-        function fetchData(spreadsheetId) {
-            // Fetch data from EtherCalc or any other source
-            // This function should update `chartData` and call `updateFinancialDisplay()`
+        function updateTable(names, values) {
+            const tableBody = document.querySelector('#data-table tbody');
+            tableBody.innerHTML = '';
+            names.forEach((name, index) => {
+                const row = document.createElement('tr');
+                const categoryCell = document.createElement('td');
+                const valueCell = document.createElement('td');
+                categoryCell.textContent = name;
+                valueCell.textContent = values[index] || 'N/A';
+                row.appendChild(categoryCell);
+                row.appendChild(valueCell);
+                tableBody.appendChild(row);
+            });
         }
 
-        document.getElementById('revenue-slider').addEventListener('input', (event) => {
-            chartData.revenue = parseFloat(event.target.value);
-            calculateProfit();
+        document.getElementById('refresh-data-button').addEventListener('click', () => fetchData(spreadsheetId));
+
+        // Toggle Between Visualizations
+        document.getElementById('toggle-financial').addEventListener('click', () => {
+            document.getElementById('financial-sliders').style.display = 'block';
+            document.getElementById('financial-data-display').style.display = 'block';
+            document.getElementById('bar-data-display').style.display = 'none';
+            document.getElementById('refresh-data-button').style.display = 'none';
+            document.getElementById('info-title').textContent = 'Financial Model AR Visualization';
+            document.getElementById('info-description').textContent = 'Adjust variables to see financial forecasts in AR.';
+            document.getElementById('toggle-financial').classList.add('active');
+            document.getElementById('toggle-3d-bar').classList.remove('active');
+            updateChart();
         });
 
-        document.getElementById('cost-slider').addEventListener('input', (event) => {
-            chartData.costs = parseFloat(event.target.value);
-            calculateProfit();
+        document.getElementById('toggle-3d-bar').addEventListener('click', () => {
+            document.getElementById('financial-sliders').style.display = 'none';
+            document.getElementById('financial-data-display').style.display = 'none';
+            document.getElementById('bar-data-display').style.display = 'block';
+            document.getElementById('refresh-data-button').style.display = 'block';
+            document.getElementById('info-title').textContent = 'AR Data Visualization';
+            document.getElementById('info-description').textContent = 'This visualization displays data in an augmented reality environment.';
+            document.getElementById('toggle-3d-bar').classList.add('active');
+            document.getElementById('toggle-financial').classList.remove('active');
+            fetchData(spreadsheetId);
         });
 
-        document.getElementById('margin-slider').addEventListener('input', (event) => {
-            chartData.profitMargin = parseFloat(event.target.value);
-            updateFinancialDisplay();
-        });
-
-        document.getElementById('zoom-slider').addEventListener('input', (event) => {
-            const zoomValue = parseFloat(event.target.value);
-            document.querySelector('a-camera').setAttribute('position', `0 1.6 ${zoomValue}`);
-        });
-
-        document.getElementById('rotation-slider').addEventListener('input', (event) => {
-            const rotationValue = parseFloat(event.target.value);
-            document.querySelector('#chart').setAttribute('rotation', `0 ${rotationValue} 0`);
-        });
-
-        function switchView(view) {
-            const financialDataDisplay = document.getElementById('financial-data-display');
-            const aScene = document.querySelector('a-scene');
-            if (view === 'financial') {
-                financialDataDisplay.style.display = 'block';
-                aScene.style.display = 'none';
-                updateFinancialDisplay();
-            } else {
-                financialDataDisplay.style.display = 'none';
-                aScene.style.display = 'block';
-                createChart([chartData.revenue, chartData.costs, chartData.profit], ['Revenue', 'Costs', 'Profit']);
-            }
-        }
-
-        // Initialize
-        switchView('financial');
+        // Initialize Financial Model by default
+        updateChart();
     </script>
 </body>
 </html>
