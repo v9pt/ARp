@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Data Visualization</title>
+    <title>AR Financial Model Visualization</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
@@ -15,11 +15,8 @@
             height: 100vh;
             display: block;
         }
-        .info-panel {
+        .info-panel, .slider-container, .data-display {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 15px;
             background-color: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -27,360 +24,179 @@
             color: #333;
             z-index: 1;
         }
-        .info-panel h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #333;
-        }
-        .info-panel p {
-            margin: 5px 0;
-            line-height: 1.5;
-        }
-        .info-panel button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .info-panel button:hover {
-            background-color: #0056b3;
+        .info-panel {
+            top: 10px;
+            left: 10px;
+            padding: 15px;
         }
         .slider-container {
-            position: absolute;
             top: 10px;
             right: 10px;
             padding: 10px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
-            color: #333;
-            z-index: 1;
-            max-width: 300px;
-        }
-        .slider-container label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .slider-container input[type="range"] {
-            width: 100%;
         }
         .data-display {
-            position: absolute;
             bottom: 60px;
             left: 10px;
             padding: 15px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
-            color: #333;
-            z-index: 1;
             max-width: 80%;
             overflow: auto;
         }
-        .data-display h2 {
+        h1, h2 {
             margin: 0;
-            font-size: 20px;
-            color: #333;
         }
-        .data-display table {
+        table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
         }
-        .data-display th, .data-display td {
+        th, td {
             padding: 10px;
             border: 1px solid #ddd;
-            text-align: left;
         }
-        .data-display th {
+        th {
             background-color: #f4f4f4;
         }
-        .data-display button {
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-            display: block;
+        button, input[type="range"] {
             width: 100%;
-        }
-        .data-display button:hover {
-            background-color: #218838;
-        }
-        .chart-buttons, .camera-controls {
-            position: absolute;
-            top: 60px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 1;
-        }
-        .chart-buttons button, .camera-controls button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .chart-buttons button:hover, .camera-controls button:hover {
-            background-color: #0056b3;
-        }
-        .camera-controls {
-            top: 60px;
-            right: 10px;
-        }
-        .chart-buttons {
-            bottom: 60px;
-            right: 10px;
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+</head>
+<body>
+    <div class="info-panel">
+        <h1>Financial Model AR Visualization</h1>
+        <p>Adjust variables to see financial forecasts in AR.</p>
+    </div>
+
+    <!-- Sliders to Adjust Financial Variables -->
+    <div class="slider-container">
+        <label for="revenue-slider">Revenue ($)</label>
+        <input type="range" id="revenue-slider" min="10000" max="1000000" step="10000" value="500000">
+        
+        <label for="cost-slider">Costs ($)</label>
+        <input type="range" id="cost-slider" min="5000" max="500000" step="5000" value="200000">
+        
+        <label for="margin-slider">Profit Margin (%)</label>
+        <input type="range" id="margin-slider" min="0" max="100" step="1" value="20">
+    </div>
+
+    <!-- Display Financial Data -->
+    <div class="data-display">
+        <h2>Financial Data</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Revenue</td>
+                    <td id="revenue-display">$500,000</td>
+                </tr>
+                <tr>
+                    <td>Costs</td>
+                    <td id="cost-display">$200,000</td>
+                </tr>
+                <tr>
+                    <td>Profit</td>
+                    <td id="profit-display">$100,000</td>
+                </tr>
+                <tr>
+                    <td>Profit Margin</td>
+                    <td id="margin-display">20%</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a-scene>
+        <a-camera id="camera" position="0 1.6 5" look-controls="pointerLockEnabled: true"></a-camera>
+        <a-light type="ambient" color="#ffffff"></a-light>
+        <a-light type="directional" position="2 4 3" target="#chart"></a-light>
+        <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
+    </a-scene>
+
     <script>
-        let currentChartType = 'bar';
+        const barWidth = 0.5;
+        const barDepth = 0.5;
+        const maxHeight = 5;
 
-        function createPieChart(values, names) {
-            const chartEntity = document.querySelector('#chart');
-            while (chartEntity.firstChild) {
-                chartEntity.removeChild(chartEntity.firstChild);
-            }
+        const chartData = {
+            revenue: 500000,
+            costs: 200000,
+            profitMargin: 20
+        };
 
-            const pieRadius = 2;
-            const pieThickness = 0.5;
-            let currentAngle = 0;
-
-            values.forEach((value, index) => {
-                const angle = (value / values.reduce((a, b) => a + b, 0)) * 2 * Math.PI;
-                const color = new THREE.Color(Math.random(), Math.random(), Math.random());
-
-                const geometry = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
-                const material = new THREE.MeshBasicMaterial({ color: color });
-                const slice = new THREE.Mesh(geometry, material);
-                slice.rotation.x = Math.PI / 2;
-                slice.position.y = pieThickness / 2;
-
-                const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
-                const borderGeometry = new THREE.CylinderGeometry(pieRadius + 0.05, pieRadius + 0.05, pieThickness + 0.05, 32, 1, false, currentAngle, angle);
-                const border = new THREE.Mesh(borderGeometry, borderMaterial);
-                border.rotation.x = Math.PI / 2;
-                border.position.y = pieThickness / 2;
-
-                const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: color, emissive: color, emissiveIntensity: 0.3 });
-                const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: color.multiplyScalar(0.5), emissive: color.multiplyScalar(0.5), emissiveIntensity: 0.3 });
-                const highlightGeometry1 = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
-                const highlightGeometry2 = new THREE.CylinderGeometry(pieRadius, pieRadius, pieThickness, 32, 1, false, currentAngle, angle);
-
-                const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
-                const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
-
-                highlight1.rotation.x = Math.PI / 2;
-                highlight1.position.y = pieThickness / 2 + 0.01;
-                highlight2.rotation.x = Math.PI / 2;
-                highlight2.position.y = pieThickness / 2 - 0.01;
-
-                const meshEntity = new AFRAME.THREE.Object3D();
-                meshEntity.add(slice);
-                meshEntity.add(border);
-                meshEntity.add(highlight1);
-                meshEntity.add(highlight2);
-
-                const wrapperEntity = document.createElement('a-entity');
-                wrapperEntity.setObject3D('mesh', meshEntity);
-                chartEntity.appendChild(wrapperEntity);
-
-                currentAngle += angle;
-
-                const text = document.createElement('a-text');
-                text.setAttribute('value', names[index] || `Item ${index}`);
-                text.setAttribute('position', `0 ${pieThickness / 2 + 0.5} 0`);
-                text.setAttribute('align', 'center');
-                text.setAttribute('color', '#000000');
-                chartEntity.appendChild(text);
-            });
+        // Function to Calculate and Update Profit
+        function calculateProfit() {
+            chartData.profit = chartData.revenue - chartData.costs;
+            chartData.profitMargin = (chartData.profit / chartData.revenue) * 100;
+            updateFinancialDisplay();
         }
 
-        function createBarChart(values, names) {
+        // Update Display Values
+        function updateFinancialDisplay() {
+            document.getElementById('revenue-display').textContent = `$${chartData.revenue.toLocaleString()}`;
+            document.getElementById('cost-display').textContent = `$${chartData.costs.toLocaleString()}`;
+            document.getElementById('profit-display').textContent = `$${chartData.profit.toLocaleString()}`;
+            document.getElementById('margin-display').textContent = `${chartData.profitMargin.toFixed(2)}%`;
+            updateChart();
+        }
+
+        // Create 3D Chart
+        function updateChart() {
             const chartEntity = document.querySelector('#chart');
             while (chartEntity.firstChild) {
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            const barWidth = 0.5;
-            const barDepth = 0.5;
-            const maxHeight = 5;
-
+            // Create Bars for Revenue, Costs, and Profit
+            const values = [chartData.revenue, chartData.costs, chartData.profit];
+            const names = ['Revenue', 'Costs', 'Profit'];
+            const colors = [0x00ff00, 0xff0000, 0x0000ff]; // Green, Red, Blue
+            
             values.forEach((value, index) => {
-                const barHeight = (value / 100) * maxHeight;
+                const barHeight = (value / 1000000) * maxHeight;
 
                 const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                const material = new THREE.MeshBasicMaterial({ color: colors[index] });
                 const bar = new THREE.Mesh(geometry, material);
                 bar.position.set(index * (barWidth + 0.2) - (values.length / 2 * (barWidth + 0.2)), barHeight / 2, 0);
 
-                const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.3, transparent: true });
-                const borderGeometry = new THREE.BoxGeometry(barWidth + 0.05, barHeight + 0.05, barDepth + 0.05);
-                const border = new THREE.Mesh(borderGeometry, borderMaterial);
-                border.position.copy(bar.position);
-
-                const highlightMaterial1 = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 });
-                const highlightMaterial2 = new THREE.MeshBasicMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 });
-                const highlightGeometry1 = new THREE.BoxGeometry(barWidth + 0.1, barHeight + 0.1, barDepth + 0.1);
-                const highlightGeometry2 = new THREE.BoxGeometry(barWidth + 0.1, barHeight + 0.1, barDepth + 0.1);
-
-                const highlight1 = new THREE.Mesh(highlightGeometry1, highlightMaterial1);
-                const highlight2 = new THREE.Mesh(highlightGeometry2, highlightMaterial2);
-
-                highlight1.position.copy(bar.position);
-                highlight2.position.copy(bar.position);
-                highlight1.position.y += 0.1;
-                highlight2.position.y -= 0.1;
-
-                const meshEntity = new AFRAME.THREE.Object3D();
-                meshEntity.add(bar);
-                meshEntity.add(border);
-                meshEntity.add(highlight1);
-                meshEntity.add(highlight2);
-
                 const wrapperEntity = document.createElement('a-entity');
-                wrapperEntity.setObject3D('mesh', meshEntity);
+                wrapperEntity.setObject3D('mesh', bar);
                 chartEntity.appendChild(wrapperEntity);
 
                 const text = document.createElement('a-text');
-                text.setAttribute('value', names[index] || `Item ${index}`);
-                text.setAttribute('position', `0 ${barHeight + 0.5} 0`);
+                text.setAttribute('value', names[index]);
+                text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
                 text.setAttribute('align', 'center');
-                text.setAttribute('color', '#000000');
                 chartEntity.appendChild(text);
             });
         }
 
-        function switchChart(type) {
-            currentChartType = type;
-            const values = [10, 20, 30, 40, 50];
-            const names = ['A', 'B', 'C', 'D', 'E'];
-
-            if (type === 'pie') {
-                createPieChart(values, names);
-            } else {
-                createBarChart(values, names);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            switchChart('bar'); // Default chart
-
-            document.querySelector('#pie-button').addEventListener('click', () => switchChart('pie'));
-            document.querySelector('#bar-button').addEventListener('click', () => switchChart('bar'));
-
-            document.querySelector('#top-view').addEventListener('click', () => {
-                const camera = document.querySelector('[camera]');
-                camera.setAttribute('position', '0 10 0');
-                camera.setAttribute('rotation', '0 0 0');
-            });
-            document.querySelector('#bottom-view').addEventListener('click', () => {
-                const camera = document.querySelector('[camera]');
-                camera.setAttribute('position', '0 -10 0');
-                camera.setAttribute('rotation', '0 0 0');
-            });
-            document.querySelector('#default-view').addEventListener('click', () => {
-                const camera = document.querySelector('[camera]');
-                camera.setAttribute('position', '0 2 10');
-                camera.setAttribute('rotation', '0 0 0');
-            });
-
-            // Improve sliders
-            const zoomSlider = document.querySelector('#zoom-slider');
-            zoomSlider.addEventListener('input', () => {
-                const camera = document.querySelector('[camera]');
-                const zoomValue = zoomSlider.value;
-                camera.setAttribute('zoom', zoomValue);
-            });
-
-            const rotationSlider = document.querySelector('#rotation-slider');
-            rotationSlider.addEventListener('input', () => {
-                const camera = document.querySelector('[camera]');
-                const rotationValue = rotationSlider.value;
-                camera.setAttribute('rotation', `0 ${rotationValue} 0`);
-            });
+        // Handle Slider Changes
+        document.getElementById('revenue-slider').addEventListener('input', (event) => {
+            chartData.revenue = parseInt(event.target.value, 10);
+            calculateProfit();
         });
-    </script>
-</head>
-<body>
-    <a-scene>
-        <!-- Chart Container -->
-        <a-entity id="chart" position="0 0 0"></a-entity>
-        
-        <!-- Camera -->
-        <a-camera position="0 2 10" rotation="0 0 0"></a-camera>
-        
-        <!-- Info Panel -->
-        <div class="info-panel">
-            <h1>AR Data Visualization</h1>
-            <p>Explore your data in 3D space with interactive charts.</p>
-            <button id="pie-button">Show Pie Chart</button>
-            <button id="bar-button">Show Bar Chart</button>
-        </div>
-        
-        <!-- Slider Controls -->
-        <div class="slider-container">
-            <label for="zoom-slider">Zoom:</label>
-            <input id="zoom-slider" type="range" min="1" max="10" step="0.1" value="5">
-            <label for="rotation-slider">Rotation:</label>
-            <input id="rotation-slider" type="range" min="0" max="360" step="1" value="0">
-        </div>
-        
-        <!-- Data Display -->
-        <div class="data-display">
-            <h2>Data Overview</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Item 1</td>
-                        <td>10</td>
-                    </tr>
-                    <tr>
-                        <td>Item 2</td>
-                        <td>20</td>
-                    </tr>
-                    <tr>
-                        <td>Item 3</td>
-                        <td>30</td>
-                    </tr>
-                </tbody>
-            </table>
-            <button>Export Data</button>
-        </div>
-        
-        <!-- Chart Buttons -->
-        <div class="chart-buttons">
-            <button id="pie-button">Pie Chart</button>
-            <button id="bar-button">Bar Chart</button>
-        </div>
 
-        <!-- Camera Controls -->
-        <div class="camera-controls">
-            <button id="top-view">Top View</button>
-            <button id="bottom-view">Bottom View</button>
-            <button id="default-view">Default View</button>
-        </div>
-    </a-scene>
+        document.getElementById('cost-slider').addEventListener('input', (event) => {
+            chartData.costs = parseInt(event.target.value, 10);
+            calculateProfit();
+        });
+
+        document.getElementById('margin-slider').addEventListener('input', (event) => {
+            chartData.profitMargin = parseInt(event.target.value, 10);
+            chartData.profit = chartData.revenue * (chartData.profitMargin / 100);
+            updateFinancialDisplay();
+        });
+
+        // Initialize Chart
+        updateChart();
+    </script>
 </body>
 </html>
