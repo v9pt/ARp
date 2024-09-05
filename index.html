@@ -61,7 +61,6 @@
         }
     </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
 </head>
 <body>
     <div class="info-panel">
@@ -113,31 +112,27 @@
     </div>
 
     <a-scene>
-        <a-camera id="camera" position="0 1.6 8" look-controls="pointerLockEnabled: true"></a-camera>
+        <a-camera position="0 1.6 5"></a-camera>
         <a-light type="ambient" color="#ffffff"></a-light>
-        <a-light type="directional" position="2 4 3" target="#chart"></a-light>
-        <a-entity id="chart" position="0 0 -5" rotation-controls="enabled: true; rotationSpeed: 0.5"></a-entity>
+        <a-light type="directional" position="2 4 3"></a-light>
+        <a-entity id="chart" position="0 0 -5"></a-entity>
     </a-scene>
 
     <script>
-        const barWidth = 0.5;
-        const barDepth = 0.5;
-        const maxHeight = 5;
-
         const chartData = {
             revenue: 500000,
             costs: 200000,
             profitMargin: 20
         };
 
-        // Function to Calculate and Update Profit
+        // Function to calculate and update profit
         function calculateProfit() {
             chartData.profit = chartData.revenue - chartData.costs;
             chartData.profitMargin = (chartData.profit / chartData.revenue) * 100;
             updateFinancialDisplay();
         }
 
-        // Update Display Values
+        // Update financial display values
         function updateFinancialDisplay() {
             document.getElementById('revenue-display').textContent = `$${chartData.revenue.toLocaleString()}`;
             document.getElementById('cost-display').textContent = `$${chartData.costs.toLocaleString()}`;
@@ -146,39 +141,46 @@
             updateChart();
         }
 
-        // Create 3D Chart
+        // Function to create or update 3D chart
         function updateChart() {
             const chartEntity = document.querySelector('#chart');
+
+            // Clear previous bars
             while (chartEntity.firstChild) {
                 chartEntity.removeChild(chartEntity.firstChild);
             }
 
-            // Create Bars for Revenue, Costs, and Profit
+            // Data for the bars
             const values = [chartData.revenue, chartData.costs, chartData.profit];
             const names = ['Revenue', 'Costs', 'Profit'];
-            const colors = [0x00ff00, 0xff0000, 0x0000ff]; // Green, Red, Blue
-            
+            const colors = ['green', 'red', 'blue'];  // Use predefined A-Frame colors
+
+            // Create bars dynamically
             values.forEach((value, index) => {
-                const barHeight = (value / 1000000) * maxHeight;
+                const height = (value / 1000000) * 5;  // Scale the height based on value
+                const positionX = (index - 1) * 1.5;  // Space the bars
 
-                const geometry = new THREE.BoxGeometry(barWidth, barHeight, barDepth);
-                const material = new THREE.MeshBasicMaterial({ color: colors[index] });
-                const bar = new THREE.Mesh(geometry, material);
-                bar.position.set(index * (barWidth + 0.5) - (values.length / 2 * (barWidth + 0.5)), barHeight / 2, 0);
+                // Create a bar (a-box) for each value
+                const bar = document.createElement('a-box');
+                bar.setAttribute('color', colors[index]);
+                bar.setAttribute('depth', 0.5);
+                bar.setAttribute('width', 0.5);
+                bar.setAttribute('height', height);
+                bar.setAttribute('position', { x: positionX, y: height / 2, z: 0 });
 
-                const wrapperEntity = document.createElement('a-entity');
-                wrapperEntity.setObject3D('mesh', bar);
-                chartEntity.appendChild(wrapperEntity);
+                // Append the bar to the chart entity
+                chartEntity.appendChild(bar);
 
-                const text = document.createElement('a-text');
-                text.setAttribute('value', names[index]);
-                text.setAttribute('position', `${bar.position.x} ${bar.position.y + barHeight / 2 + 0.5} ${bar.position.z}`);
-                text.setAttribute('align', 'center');
-                chartEntity.appendChild(text);
+                // Add a label above each bar
+                const label = document.createElement('a-text');
+                label.setAttribute('value', names[index]);
+                label.setAttribute('align', 'center');
+                label.setAttribute('position', { x: positionX, y: height + 0.5, z: 0 });
+                chartEntity.appendChild(label);
             });
         }
 
-        // Handle Slider Changes
+        // Handle slider input for revenue, costs, and margin
         document.getElementById('revenue-slider').addEventListener('input', (event) => {
             chartData.revenue = parseInt(event.target.value, 10);
             calculateProfit();
@@ -195,7 +197,7 @@
             updateFinancialDisplay();
         });
 
-        // Initialize Chart
+        // Initialize the chart
         updateChart();
     </script>
 </body>
